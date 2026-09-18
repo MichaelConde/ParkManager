@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: parking-postgres
+    environment:
+      POSTGRES_DB: parking
+      POSTGRES_USER: parking
+      POSTGRES_PASSWORD: parking
+    ports:
+      - "5432:5432"
+    volumes:
+      - parking_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parking -d parking"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: parking-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/parking
+      SPRING_DATASOURCE_USERNAME: parking
+      SPRING_DATASOURCE_PASSWORD: parking
+      JWT_SECRET: cGFya2luZy1zeXN0ZW0tZGVtby1zZWNyZXQta2V5LWNoYW5nZS1pbi1wcm9kdWN0aW9uLTEyMzQ1Ng==
+      APP_CORS_ORIGINS: http://localhost,http://localhost:80,http://localhost:4200
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: parking-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: parking-adminer
+    depends_on:
+      - postgres
+    ports:
+      - "8081:8080"
+
+volumes:
+  parking_pgdata:
