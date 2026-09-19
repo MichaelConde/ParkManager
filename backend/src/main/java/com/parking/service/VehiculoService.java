@@ -62,12 +62,29 @@ public class VehiculoService {
     @Transactional
     public Vehiculo obtenerOCrear(String placa, com.parking.domain.TipoVehiculo tipo, String modelo, Long clienteId) {
         return vehiculoRepository.findByPlacaIgnoreCase(placa)
+                .map(existente -> actualizarTipoSiCambio(existente, tipo))
                 .orElseGet(() -> {
                     Vehiculo nuevo = construir(new VehiculoRequest(placa, modelo, tipo, clienteId));
                     Vehiculo guardado = vehiculoRepository.save(nuevo);
                     auditService.registrar("CREATE", "VEHICULO", guardado.getId(), "Vehiculo creado automaticamente en ingreso: " + guardado.getPlaca());
                     return guardado;
                 });
+    }
+
+    /**
+     * La plaza asignada en el ingreso siempre usa el tipo declarado en esa
+     * solicitud (ver SesionService.registrarIngreso). Si el vehiculo ya
+     * existia con un tipo distinto (p.ej. la placa se reutilizo para un
+     * vehiculo distinto, o se corrige un error de captura previo), hay que
+     * sincronizar el tipo persistido: de lo contrario la sesion queda
+     * apuntando a una plaza de un tipo y mostrando el modelo 3D de otro.
+     */
+    private Vehiculo actualizarTipoSiCambio(Vehiculo vehiculo, com.parking.domain.TipoVehiculo tipo) {
+        if (vehiculo.getTipo() != tipo) {
+            vehiculo.setTipo(tipo);
+            vehiculo = vehiculoRepository.save(vehiculo);
+        }
+        return vehiculo;
     }
 
     private Vehiculo construir(VehiculoRequest request) {

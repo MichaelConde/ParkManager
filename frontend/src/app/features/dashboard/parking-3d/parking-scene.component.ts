@@ -49,7 +49,7 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
   private slots = new Map<string, PlazaSlot>();
   private instances = new Map<string, THREE.Group>();
   private pendingSpawns = new Set<string>();
-  private viewSize = 11;
+  private viewSize = 7;
 
   constructor(private vehicleModelService: VehicleModelService) {}
 
@@ -138,8 +138,8 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
     this.controls.enablePan = false;
-    this.controls.minZoom = 0.7;
-    this.controls.maxZoom = 1.8;
+    this.controls.minZoom = 0.6;
+    this.controls.maxZoom = 2.6;
     this.controls.minPolarAngle = Math.PI / 3.6;
     this.controls.maxPolarAngle = Math.PI / 2.6;
     this.controls.autoRotate = true;
@@ -183,7 +183,7 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
       maxZ = Math.max(maxZ, Math.abs(slot.z) + slot.depth / 2);
     }
     const diagonal = Math.sqrt(maxX * maxX + maxZ * maxZ) * 2;
-    this.viewSize = Math.max(11, diagonal * 0.95);
+    this.viewSize = Math.max(7, diagonal * 0.62);
 
     this.camera.left = (-this.viewSize * aspect) / 2;
     this.camera.right = (this.viewSize * aspect) / 2;
