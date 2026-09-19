@@ -30,9 +30,16 @@ Requiere Docker y Docker Compose instalados.
 docker compose up --build
 ```
 
-- Frontend: http://localhost
+- Frontend: http://localhost:8090
 - Backend (API): http://localhost:8080/api
 - Adminer (explorador de BD): http://localhost:8081 (sistema: PostgreSQL, servidor: `postgres`, usuario: `parking`, contraseña: `parking`, BD: `parking`)
+- Postgres expuesto al host en el puerto `5433` (el `5432` estandar puede estar ocupado por otra instalacion local de PostgreSQL)
+
+> Nota: los puertos 80 y 5432 del host se dejaron libres a proposito porque
+> son comunes de otras herramientas (XAMPP/Apache, PostgreSQL nativo). Si
+> en tu maquina esos puertos estan libres y prefieres usarlos, edita
+> `docker-compose.yml` y cambia `8090:80` por `80:80` y `5433:5432` por
+> `5432:5432`.
 
 ### Usuarios semilla
 

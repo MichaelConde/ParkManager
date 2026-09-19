@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: parking
       POSTGRES_PASSWORD: parking
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - parking_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -28,7 +28,7 @@ services:
       SPRING_DATASOURCE_USERNAME: parking
       SPRING_DATASOURCE_PASSWORD: parking
       JWT_SECRET: cGFya2luZy1zeXN0ZW0tZGVtby1zZWNyZXQta2V5LWNoYW5nZS1pbi1wcm9kdWN0aW9uLTEyMzQ1Ng==
-      APP_CORS_ORIGINS: http://localhost,http://localhost:80,http://localhost:4200
+      APP_CORS_ORIGINS: http://localhost,http://localhost:80,http://localhost:8090,http://localhost:4200
     ports:
       - "8080:8080"
     healthcheck:
@@ -45,7 +45,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "8090:80"
 
   adminer:
     image: adminer:4.8.1
