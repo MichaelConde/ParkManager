@@ -9,9 +9,11 @@ import {
   LucideLayoutDashboard,
   LucideLayoutGrid,
   LucideLogOut,
+  LucideMenu,
   LucideShieldCheck,
   LucideTicket,
-  LucideUsers
+  LucideUsers,
+  LucideX
 } from '@lucide/angular';
 import { AuthService } from '../services/auth.service';
 import { NotificacionService } from '../services/notificacion.service';
@@ -34,11 +36,19 @@ import { Notificacion } from '../models/models';
     LucideChartLine,
     LucideShieldCheck,
     LucideLogOut,
-    LucideBell
+    LucideBell,
+    LucideMenu,
+    LucideX
   ],
   template: `
     <div class="flex h-screen overflow-hidden bg-ink-950 text-slate-200">
-      <aside class="flex w-64 shrink-0 flex-col border-r border-white/[0.06] bg-ink-900/70 backdrop-blur-xl">
+      @if (sidebarAbierto()) {
+        <div class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden" (click)="sidebarAbierto.set(false)"></div>
+      }
+      <aside
+        class="fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 -translate-x-full flex-col border-r border-white/[0.06] bg-ink-900/95 backdrop-blur-xl transition-transform duration-300 md:relative md:translate-x-0 md:bg-ink-900/70"
+        [class.translate-x-0]="sidebarAbierto()"
+      >
         <div class="flex items-center gap-2.5 px-5 py-5">
           <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-500/15 text-accent-400">
             <svg lucideCircleParking [size]="20"></svg>
@@ -47,9 +57,12 @@ import { Notificacion } from '../models/models';
             <h1 class="text-[15px] font-bold leading-tight tracking-tight text-white">ParkManager</h1>
             <p class="text-[11px] text-slate-500">{{ auth.usuario()?.username }} &middot; {{ auth.rol() }}</p>
           </div>
+          <button (click)="sidebarAbierto.set(false)" class="btn-icon ml-auto md:hidden">
+            <svg lucideX [size]="17"></svg>
+          </button>
         </div>
 
-        <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
+        <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2" (click)="sidebarAbierto.set(false)">
           <a routerLink="/dashboard" routerLinkActive="nav-active" class="nav-link group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-white/[0.04] hover:text-white">
             <span class="flex shrink-0 items-center opacity-70 transition-opacity group-hover:opacity-100"><svg lucideLayoutDashboard [size]="17"></svg></span>
             <span>Dashboard</span>
@@ -93,8 +106,11 @@ import { Notificacion } from '../models/models';
         </div>
       </aside>
 
-      <div class="flex flex-1 flex-col overflow-hidden">
-        <header class="flex items-center justify-end border-b border-white/[0.06] bg-ink-900/40 px-6 py-3 backdrop-blur-xl">
+      <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header class="flex items-center justify-between border-b border-white/[0.06] bg-ink-900/40 px-4 py-3 backdrop-blur-xl md:justify-end md:px-6">
+          <button (click)="sidebarAbierto.set(true)" class="btn-icon md:hidden">
+            <svg lucideMenu [size]="18"></svg>
+          </button>
           <div class="relative">
             <button (click)="mostrarNotificaciones.set(!mostrarNotificaciones())"
                     class="btn-icon relative">
@@ -141,6 +157,7 @@ import { Notificacion } from '../models/models';
   `]
 })
 export class ShellComponent implements OnInit {
+  sidebarAbierto = signal(false);
   mostrarNotificaciones = signal(false);
   notificaciones = signal<Notificacion[]>([]);
 

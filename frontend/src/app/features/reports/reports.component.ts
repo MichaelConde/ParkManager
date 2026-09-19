@@ -29,7 +29,7 @@ import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directi
           <h2 class="text-2xl font-bold tracking-tight text-white">Reportes</h2>
           <p class="text-sm text-slate-500">Ingresos, ocupacion y desempeno del estacionamiento</p>
         </div>
-        <div class="flex items-end gap-2">
+        <div class="flex flex-wrap items-end gap-2">
           <div>
             <label class="label-eyebrow mb-1.5 block">Desde</label>
             <input type="date" [(ngModel)]="desde" class="glass-input" />
