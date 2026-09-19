@@ -1,127 +1,141 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { LucidePlus, LucideTicket } from '@lucide/angular';
 import { MembresiaService } from '../../core/services/membresia.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Membresia, PlanMembresia } from '../../core/models/models';
 import { ToastService } from '../../shared/services/toast.service';
+import { GlassCardComponent } from '../../shared/ui/glass-card.component';
+import { StatusBadgeComponent } from '../../shared/ui/status-badge.component';
+import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directive';
+import { membresiaTone } from '../../shared/ui/status.util';
 
 @Component({
   selector: 'app-memberships',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    GlassCardComponent,
+    StatusBadgeComponent,
+    GsapRevealDirective,
+    LucidePlus,
+    LucideTicket
+  ],
   template: `
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-slate-800">Membresias</h2>
+        <h2 class="text-2xl font-bold tracking-tight text-white">Membresias</h2>
         <p class="text-sm text-slate-500">Planes de suscripcion, asignacion y vigencias</p>
       </div>
 
       @if (auth.esAdmin()) {
-        <div class="bg-white rounded-xl shadow-sm p-5">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-slate-800">Planes disponibles</h3>
-            <button (click)="nuevoPlan()" class="text-sm bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg">+ Nuevo plan</button>
+        <app-glass-card padding="lg">
+          <div class="mb-4 flex items-center justify-between">
+            <p class="label-eyebrow">Planes disponibles</p>
+            <button (click)="nuevoPlan()" class="btn-primary !px-4 !py-2 text-xs">
+              <svg lucidePlus [size]="14"></svg> Nuevo plan
+            </button>
           </div>
 
           @if (formPlanVisible()) {
-            <form [formGroup]="formPlan" (ngSubmit)="guardarPlan()" class="flex flex-wrap items-end gap-3 border rounded-lg p-4 mb-4 bg-slate-50">
+            <form [formGroup]="formPlan" (ngSubmit)="guardarPlan()" class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
               <div>
-                <label class="block text-xs text-slate-500 mb-1">Nombre</label>
-                <input formControlName="nombre" class="border rounded-lg px-3 py-2 text-sm" />
-              </div>
-              <div>
-                <label class="block text-xs text-slate-500 mb-1">Duracion (dias)</label>
-                <input formControlName="duracionDias" type="number" min="1" class="border rounded-lg px-3 py-2 text-sm w-28" />
+                <label class="label-eyebrow mb-1.5 block">Nombre</label>
+                <input formControlName="nombre" class="glass-input" />
               </div>
               <div>
-                <label class="block text-xs text-slate-500 mb-1">Precio (S/)</label>
-                <input formControlName="precio" type="number" step="0.10" min="0.10" class="border rounded-lg px-3 py-2 text-sm w-28" />
+                <label class="label-eyebrow mb-1.5 block">Duracion (dias)</label>
+                <input formControlName="duracionDias" type="number" min="1" class="glass-input w-28" />
               </div>
-              <div class="flex-1 min-w-[160px]">
-                <label class="block text-xs text-slate-500 mb-1">Descripcion</label>
-                <input formControlName="descripcion" class="border rounded-lg px-3 py-2 text-sm w-full" />
+              <div>
+                <label class="label-eyebrow mb-1.5 block">Precio (S/)</label>
+                <input formControlName="precio" type="number" step="0.10" min="0.10" class="glass-input w-28" />
               </div>
-              <button type="submit" [disabled]="formPlan.invalid || guardandoPlan()" class="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg">Guardar</button>
-              <button type="button" (click)="formPlanVisible.set(false)" class="text-sm text-slate-500 hover:underline">Cancelar</button>
+              <div class="min-w-[160px] flex-1">
+                <label class="label-eyebrow mb-1.5 block">Descripcion</label>
+                <input formControlName="descripcion" class="glass-input w-full" />
+              </div>
+              <button type="submit" [disabled]="formPlan.invalid || guardandoPlan()" class="btn-primary">Guardar</button>
+              <button type="button" (click)="formPlanVisible.set(false)" class="btn-ghost">Cancelar</button>
             </form>
           }
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            @for (p of planes(); track p.id) {
-              <div class="border rounded-lg p-4" [class.opacity-50]="!p.activo">
-                <p class="font-semibold text-slate-800">{{ p.nombre }}</p>
-                <p class="text-xs text-slate-500 mb-2">{{ p.descripcion }}</p>
-                <p class="text-lg font-bold text-brand-700">S/ {{ p.precio.toFixed(2) }}</p>
-                <p class="text-xs text-slate-400">{{ p.duracionDias }} dias</p>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            @for (p of planes(); track p.id; let i = $index) {
+              <div gsapReveal [gsapIndex]="i" class="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4" [class.opacity-40]="!p.activo">
+                <div class="mb-1 flex items-center gap-1.5 text-accent-400">
+                  <svg lucideTicket [size]="14"></svg>
+                  <p class="font-semibold text-white">{{ p.nombre }}</p>
+                </div>
+                <p class="mb-2 text-xs text-slate-500">{{ p.descripcion }}</p>
+                <p class="text-lg font-bold text-white">S/ {{ p.precio.toFixed(2) }}</p>
+                <p class="text-xs text-slate-500">{{ p.duracionDias }} dias</p>
                 @if (p.activo) {
-                  <button (click)="desactivarPlan(p)" class="text-xs text-red-600 hover:underline mt-2">Desactivar</button>
+                  <button (click)="desactivarPlan(p)" class="mt-2 text-xs font-medium text-red-400 hover:text-red-300">Desactivar</button>
                 }
               </div>
             }
           </div>
-        </div>
+        </app-glass-card>
       }
 
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="font-semibold text-slate-800 mb-4">Asignar membresia a un cliente</h3>
+      <app-glass-card padding="lg">
+        <p class="label-eyebrow mb-4">Asignar membresia a un cliente</p>
         <form [formGroup]="formAsignar" (ngSubmit)="asignar()" class="flex flex-wrap items-end gap-3">
           <div>
-            <label class="block text-xs text-slate-500 mb-1">ID de cliente</label>
-            <input formControlName="clienteId" type="number" class="border rounded-lg px-3 py-2 text-sm w-32" />
+            <label class="label-eyebrow mb-1.5 block">ID de cliente</label>
+            <input formControlName="clienteId" type="number" class="glass-input w-32" />
           </div>
           <div>
-            <label class="block text-xs text-slate-500 mb-1">Plan</label>
-            <select formControlName="planId" class="border rounded-lg px-3 py-2 text-sm">
+            <label class="label-eyebrow mb-1.5 block">Plan</label>
+            <select formControlName="planId" class="glass-input">
               @for (p of planesActivos(); track p.id) {
                 <option [value]="p.id">{{ p.nombre }} (S/ {{ p.precio.toFixed(2) }})</option>
               }
             </select>
           </div>
           <div>
-            <label class="block text-xs text-slate-500 mb-1">Fecha de inicio</label>
-            <input formControlName="fechaInicio" type="date" class="border rounded-lg px-3 py-2 text-sm" />
+            <label class="label-eyebrow mb-1.5 block">Fecha de inicio</label>
+            <input formControlName="fechaInicio" type="date" class="glass-input" />
           </div>
-          <button type="submit" [disabled]="formAsignar.invalid || asignando()" class="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg">
+          <button type="submit" [disabled]="formAsignar.invalid || asignando()" class="btn-primary">
             Asignar
           </button>
         </form>
-      </div>
+      </app-glass-card>
 
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="font-semibold text-slate-800 mb-4">Membresias registradas</h3>
+      <app-glass-card padding="lg">
+        <p class="label-eyebrow mb-4">Membresias registradas</p>
         <table class="w-full text-sm">
           <thead>
-            <tr class="text-left text-slate-500 border-b">
-              <th class="py-2">Cliente</th>
-              <th>Plan</th>
-              <th>Inicio</th>
-              <th>Fin</th>
-              <th>Estado</th>
+            <tr class="border-b border-white/[0.08] text-left text-xs uppercase tracking-wide text-slate-500">
+              <th class="py-2 font-medium">Cliente</th>
+              <th class="font-medium">Plan</th>
+              <th class="font-medium">Inicio</th>
+              <th class="font-medium">Fin</th>
+              <th class="font-medium">Estado</th>
             </tr>
           </thead>
           <tbody>
-            @for (m of membresias(); track m.id) {
-              <tr class="border-b last:border-0">
-                <td class="py-2">{{ m.clienteNombre }}</td>
-                <td>{{ m.planNombre }}</td>
-                <td>{{ m.fechaInicio }}</td>
-                <td>{{ m.fechaFin }}</td>
+            @for (m of membresias(); track m.id; let i = $index) {
+              <tr gsapReveal [gsapIndex]="i" class="table-row-glass">
+                <td class="py-2.5 font-semibold text-white">{{ m.clienteNombre }}</td>
+                <td class="text-slate-400">{{ m.planNombre }}</td>
+                <td class="text-slate-400">{{ m.fechaInicio }}</td>
+                <td class="text-slate-400">{{ m.fechaFin }}</td>
                 <td>
-                  <span class="px-2 py-0.5 rounded-full text-xs font-medium"
-                        [class.bg-green-100]="esVigente(m)" [class.text-green-700]="esVigente(m)"
-                        [class.bg-gray-100]="!esVigente(m)" [class.text-gray-500]="!esVigente(m)">
-                    {{ esVigente(m) ? 'Vigente' : 'Vencida' }}
-                  </span>
+                  <app-status-badge [label]="esVigente(m) ? 'Vigente' : 'Vencida'" [tone]="tone(esVigente(m))" />
                 </td>
               </tr>
             }
           </tbody>
         </table>
         @if (membresias().length === 0) {
-          <p class="text-sm text-slate-400 text-center py-6">No hay membresias asignadas todavia.</p>
+          <p class="py-8 text-center text-sm text-slate-500">No hay membresias asignadas todavia.</p>
         }
-      </div>
+      </app-glass-card>
     </div>
   `
 })
@@ -131,6 +145,8 @@ export class MembershipsComponent implements OnInit {
   formPlanVisible = signal(false);
   guardandoPlan = signal(false);
   asignando = signal(false);
+
+  tone = membresiaTone;
 
   private fb = inject(FormBuilder);
 

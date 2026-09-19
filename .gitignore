@@ -23,3 +23,6 @@ frontend/*.log
 
 # OS
 Thumbs.db
+
+# Referencia de diseño (no es parte del codigo fuente)
+/Estilo.pdf

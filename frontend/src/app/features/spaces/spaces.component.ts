@@ -1,112 +1,124 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { LucidePencil, LucidePlus, LucideTrash } from '@lucide/angular';
 import { PlazaService } from '../../core/services/plaza.service';
 import { TarifaService } from '../../core/services/tarifa.service';
 import { EstadoPlaza, Plaza, Tarifa, TipoVehiculo } from '../../core/models/models';
 import { ToastService } from '../../shared/services/toast.service';
+import { GlassCardComponent } from '../../shared/ui/glass-card.component';
+import { StatusBadgeComponent } from '../../shared/ui/status-badge.component';
+import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directive';
+import { plazaTone } from '../../shared/ui/status.util';
 
 @Component({
   selector: 'app-spaces',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    GlassCardComponent,
+    StatusBadgeComponent,
+    GsapRevealDirective,
+    LucidePlus,
+    LucidePencil,
+    LucideTrash
+  ],
   template: `
-    <div class="space-y-8">
+    <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-slate-800">Plazas y tarifas</h2>
+        <h2 class="text-2xl font-bold tracking-tight text-white">Plazas y tarifas</h2>
         <p class="text-sm text-slate-500">Configuracion dinamica de espacios y precios por hora</p>
       </div>
 
       <!-- Tarifas -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <h3 class="font-semibold text-slate-800 mb-4">Tarifas vigentes</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          @for (t of tarifas(); track t.id) {
-            <div class="border rounded-lg px-4 py-3 flex items-center justify-between">
+      <app-glass-card padding="lg">
+        <p class="label-eyebrow mb-4">Tarifas vigentes</p>
+        <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          @for (t of tarifas(); track t.id; let i = $index) {
+            <div gsapReveal [gsapIndex]="i" class="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3.5">
               <div>
-                <p class="text-sm text-slate-500">{{ t.tipoVehiculo }}</p>
-                <p class="text-xl font-bold text-slate-800">S/ {{ t.precioHora.toFixed(2) }} / hora</p>
+                <p class="text-xs text-slate-500">{{ t.tipoVehiculo }}</p>
+                <p class="text-xl font-bold text-white">S/ {{ t.precioHora.toFixed(2) }} <span class="text-sm font-normal text-slate-500">/ hora</span></p>
               </div>
-              <button (click)="editarTarifa(t)" class="text-sm text-brand-600 hover:underline">Editar</button>
+              <button (click)="editarTarifa(t)" class="btn-icon">
+                <svg lucidePencil [size]="14"></svg>
+              </button>
             </div>
           }
         </div>
 
         @if (formTarifaVisible()) {
-          <form [formGroup]="formTarifa" (ngSubmit)="guardarTarifa()" class="flex flex-wrap items-end gap-3 border-t pt-4">
+          <form [formGroup]="formTarifa" (ngSubmit)="guardarTarifa()" class="flex flex-wrap items-end gap-3 border-t border-white/[0.08] pt-4">
             <div>
-              <label class="block text-xs text-slate-500 mb-1">Tipo</label>
-              <select formControlName="tipoVehiculo" class="border rounded-lg px-3 py-2 text-sm">
+              <label class="label-eyebrow mb-1.5 block">Tipo</label>
+              <select formControlName="tipoVehiculo" class="glass-input w-32">
                 <option value="AUTO">AUTO</option>
                 <option value="MOTO">MOTO</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs text-slate-500 mb-1">Precio por hora (S/)</label>
-              <input formControlName="precioHora" type="number" step="0.10" min="0.10"
-                     class="border rounded-lg px-3 py-2 text-sm w-32" />
+              <label class="label-eyebrow mb-1.5 block">Precio por hora (S/)</label>
+              <input formControlName="precioHora" type="number" step="0.10" min="0.10" class="glass-input w-32" />
             </div>
-            <button type="submit" [disabled]="formTarifa.invalid || guardandoTarifa()"
-                    class="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg">
-              Guardar
-            </button>
-            <button type="button" (click)="formTarifaVisible.set(false)" class="text-sm text-slate-500 hover:underline">Cancelar</button>
+            <button type="submit" [disabled]="formTarifa.invalid || guardandoTarifa()" class="btn-primary">Guardar</button>
+            <button type="button" (click)="formTarifaVisible.set(false)" class="btn-ghost">Cancelar</button>
           </form>
         } @else {
-          <button (click)="nuevaTarifa()" class="text-sm text-brand-600 hover:underline">+ Actualizar tarifa</button>
+          <button (click)="nuevaTarifa()" class="flex items-center gap-1.5 text-sm font-medium text-accent-400 hover:text-accent-300">
+            <svg lucidePlus [size]="15"></svg> Actualizar tarifa
+          </button>
         }
-      </div>
+      </app-glass-card>
 
       <!-- Plazas -->
-      <div class="bg-white rounded-xl shadow-sm p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold text-slate-800">Plazas de estacionamiento ({{ plazas().length }})</h3>
-          <button (click)="nuevaPlaza()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-            + Nueva plaza
+      <app-glass-card padding="lg">
+        <div class="mb-4 flex items-center justify-between">
+          <p class="label-eyebrow">Plazas de estacionamiento ({{ plazas().length }})</p>
+          <button (click)="nuevaPlaza()" class="btn-primary !px-4 !py-2 text-xs">
+            <svg lucidePlus [size]="14"></svg> Nueva plaza
           </button>
         </div>
 
         @if (formPlazaVisible()) {
-          <form [formGroup]="formPlaza" (ngSubmit)="guardarPlaza()" class="flex flex-wrap items-end gap-3 border rounded-lg p-4 mb-4 bg-slate-50">
+          <form [formGroup]="formPlaza" (ngSubmit)="guardarPlaza()" class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
             <div>
-              <label class="block text-xs text-slate-500 mb-1">Codigo</label>
-              <input formControlName="codigo" type="text" class="border rounded-lg px-3 py-2 text-sm w-28" />
+              <label class="label-eyebrow mb-1.5 block">Codigo</label>
+              <input formControlName="codigo" type="text" class="glass-input w-28" />
             </div>
             <div>
-              <label class="block text-xs text-slate-500 mb-1">Tipo</label>
-              <select formControlName="tipo" class="border rounded-lg px-3 py-2 text-sm">
+              <label class="label-eyebrow mb-1.5 block">Tipo</label>
+              <select formControlName="tipo" class="glass-input w-28">
                 <option value="AUTO">AUTO</option>
                 <option value="MOTO">MOTO</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs text-slate-500 mb-1">Zona</label>
-              <input formControlName="zona" type="text" class="border rounded-lg px-3 py-2 text-sm w-32" />
+              <label class="label-eyebrow mb-1.5 block">Zona</label>
+              <input formControlName="zona" type="text" class="glass-input w-32" />
             </div>
             @if (editandoPlazaId() !== null) {
               <div>
-                <label class="block text-xs text-slate-500 mb-1">Estado</label>
-                <select formControlName="estado" class="border rounded-lg px-3 py-2 text-sm">
+                <label class="label-eyebrow mb-1.5 block">Estado</label>
+                <select formControlName="estado" class="glass-input w-32">
                   <option value="LIBRE">LIBRE</option>
                   <option value="OCUPADA">OCUPADA</option>
                 </select>
               </div>
             }
-            <button type="submit" [disabled]="formPlaza.invalid || guardandoPlaza()"
-                    class="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg">
-              Guardar
-            </button>
-            <button type="button" (click)="formPlazaVisible.set(false)" class="text-sm text-slate-500 hover:underline">Cancelar</button>
+            <button type="submit" [disabled]="formPlaza.invalid || guardandoPlaza()" class="btn-primary">Guardar</button>
+            <button type="button" (click)="formPlazaVisible.set(false)" class="btn-ghost">Cancelar</button>
           </form>
         }
 
-        <div class="flex gap-2 mb-3">
-          <select [(ngModel)]="filtroTipo" (ngModelChange)="cargarPlazas()" class="border rounded-lg px-3 py-1.5 text-sm">
+        <div class="mb-3 flex gap-2">
+          <select [(ngModel)]="filtroTipo" (ngModelChange)="cargarPlazas()" class="glass-input w-auto !py-1.5 text-xs">
             <option [ngValue]="undefined">Todos los tipos</option>
             <option value="AUTO">AUTO</option>
             <option value="MOTO">MOTO</option>
           </select>
-          <select [(ngModel)]="filtroEstado" (ngModelChange)="cargarPlazas()" class="border rounded-lg px-3 py-1.5 text-sm">
+          <select [(ngModel)]="filtroEstado" (ngModelChange)="cargarPlazas()" class="glass-input w-auto !py-1.5 text-xs">
             <option [ngValue]="undefined">Todos los estados</option>
             <option value="LIBRE">LIBRE</option>
             <option value="OCUPADA">OCUPADA</option>
@@ -115,40 +127,37 @@ import { ToastService } from '../../shared/services/toast.service';
 
         <table class="w-full text-sm">
           <thead>
-            <tr class="text-left text-slate-500 border-b">
-              <th class="py-2">Codigo</th>
-              <th>Tipo</th>
-              <th>Zona</th>
-              <th>Estado</th>
+            <tr class="border-b border-white/[0.08] text-left text-xs uppercase tracking-wide text-slate-500">
+              <th class="py-2 font-medium">Codigo</th>
+              <th class="font-medium">Tipo</th>
+              <th class="font-medium">Zona</th>
+              <th class="font-medium">Estado</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            @for (p of plazas(); track p.id) {
-              <tr class="border-b last:border-0 hover:bg-slate-50">
-                <td class="py-2 font-medium">{{ p.codigo }}</td>
-                <td>{{ p.tipo }}</td>
-                <td>{{ p.zona || '-' }}</td>
-                <td>
-                  <span class="px-2 py-0.5 rounded-full text-xs font-medium"
-                        [class.bg-green-100]="p.estado === 'LIBRE'" [class.text-green-700]="p.estado === 'LIBRE'"
-                        [class.bg-red-100]="p.estado === 'OCUPADA'" [class.text-red-700]="p.estado === 'OCUPADA'">
-                    {{ p.estado }}
-                  </span>
-                </td>
-                <td class="text-right space-x-3">
-                  <button (click)="editarPlaza(p)" class="text-brand-600 hover:underline">Editar</button>
-                  <button (click)="eliminarPlaza(p)" [disabled]="p.estado === 'OCUPADA'"
-                          class="text-red-600 hover:underline disabled:opacity-30 disabled:cursor-not-allowed">Eliminar</button>
+            @for (p of plazas(); track p.id; let i = $index) {
+              <tr gsapReveal [gsapIndex]="i" class="table-row-glass">
+                <td class="py-2.5 font-semibold text-white">{{ p.codigo }}</td>
+                <td class="text-slate-400">{{ p.tipo }}</td>
+                <td class="text-slate-400">{{ p.zona || '-' }}</td>
+                <td><app-status-badge [label]="p.estado" [tone]="tone(p.estado)" /></td>
+                <td class="space-x-1 text-right">
+                  <button (click)="editarPlaza(p)" class="btn-icon !h-8 !w-8">
+                    <svg lucidePencil [size]="13"></svg>
+                  </button>
+                  <button (click)="eliminarPlaza(p)" [disabled]="p.estado === 'OCUPADA'" class="btn-icon !h-8 !w-8 hover:!border-red-400/25 hover:!bg-red-500/10 hover:!text-red-300 disabled:opacity-30">
+                    <svg lucideTrash [size]="13"></svg>
+                  </button>
                 </td>
               </tr>
             }
           </tbody>
         </table>
         @if (plazas().length === 0) {
-          <p class="text-sm text-slate-400 text-center py-6">No hay plazas registradas.</p>
+          <p class="py-8 text-center text-sm text-slate-500">No hay plazas registradas.</p>
         }
-      </div>
+      </app-glass-card>
     </div>
   `
 })
@@ -164,6 +173,8 @@ export class SpacesComponent implements OnInit {
   formTarifaVisible = signal(false);
   guardandoPlaza = signal(false);
   guardandoTarifa = signal(false);
+
+  tone = plazaTone;
 
   private fb = inject(FormBuilder);
 

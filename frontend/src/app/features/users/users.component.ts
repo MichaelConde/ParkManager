@@ -1,74 +1,73 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { LucidePlus } from '@lucide/angular';
 import { UsuarioService } from '../../core/services/usuario.service';
 import { Rol, Usuario } from '../../core/models/models';
 import { ToastService } from '../../shared/services/toast.service';
+import { GlassCardComponent } from '../../shared/ui/glass-card.component';
+import { StatusBadgeComponent } from '../../shared/ui/status-badge.component';
+import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directive';
+import { boolTone } from '../../shared/ui/status.util';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, GlassCardComponent, StatusBadgeComponent, GsapRevealDirective, LucidePlus],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-2xl font-bold text-slate-800">Usuarios del sistema</h2>
+          <h2 class="text-2xl font-bold tracking-tight text-white">Usuarios del sistema</h2>
           <p class="text-sm text-slate-500">Cuentas de administradores y cajeros</p>
         </div>
-        <button (click)="formVisible.set(true)" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-          + Nuevo usuario
+        <button (click)="formVisible.set(true)" class="btn-primary !px-4 !py-2 text-xs">
+          <svg lucidePlus [size]="14"></svg> Nuevo usuario
         </button>
       </div>
 
       @if (formVisible()) {
-        <form [formGroup]="form" (ngSubmit)="guardar()" class="bg-white rounded-xl shadow-sm p-5 flex flex-wrap items-end gap-3">
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Usuario</label>
-            <input formControlName="username" class="border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Contrasena</label>
-            <input formControlName="password" type="password" class="border rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">Rol</label>
-            <select formControlName="rol" class="border rounded-lg px-3 py-2 text-sm">
-              <option value="CAJERO">CAJERO</option>
-              <option value="ADMIN">ADMIN</option>
-            </select>
-          </div>
-          <button type="submit" [disabled]="form.invalid || guardando()" class="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg">
-            Crear
-          </button>
-          <button type="button" (click)="formVisible.set(false)" class="text-sm text-slate-500 hover:underline">Cancelar</button>
-        </form>
+        <app-glass-card padding="lg">
+          <form [formGroup]="form" (ngSubmit)="guardar()" class="flex flex-wrap items-end gap-3">
+            <div>
+              <label class="label-eyebrow mb-1.5 block">Usuario</label>
+              <input formControlName="username" class="glass-input" />
+            </div>
+            <div>
+              <label class="label-eyebrow mb-1.5 block">Contrasena</label>
+              <input formControlName="password" type="password" class="glass-input" />
+            </div>
+            <div>
+              <label class="label-eyebrow mb-1.5 block">Rol</label>
+              <select formControlName="rol" class="glass-input">
+                <option value="CAJERO">CAJERO</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+            <button type="submit" [disabled]="form.invalid || guardando()" class="btn-primary">Crear</button>
+            <button type="button" (click)="formVisible.set(false)" class="btn-ghost">Cancelar</button>
+          </form>
+        </app-glass-card>
       }
 
-      <div class="bg-white rounded-xl shadow-sm p-5">
+      <app-glass-card padding="lg">
         <table class="w-full text-sm">
           <thead>
-            <tr class="text-left text-slate-500 border-b">
-              <th class="py-2">Usuario</th>
-              <th>Rol</th>
-              <th>Estado</th>
+            <tr class="border-b border-white/[0.08] text-left text-xs uppercase tracking-wide text-slate-500">
+              <th class="py-2 font-medium">Usuario</th>
+              <th class="font-medium">Rol</th>
+              <th class="font-medium">Estado</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            @for (u of usuarios(); track u.id) {
-              <tr class="border-b last:border-0">
-                <td class="py-2 font-medium">{{ u.username }}</td>
-                <td>{{ u.rol }}</td>
-                <td>
-                  <span class="px-2 py-0.5 rounded-full text-xs font-medium"
-                        [class.bg-green-100]="u.activo" [class.text-green-700]="u.activo"
-                        [class.bg-gray-100]="!u.activo" [class.text-gray-500]="!u.activo">
-                    {{ u.activo ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
+            @for (u of usuarios(); track u.id; let i = $index) {
+              <tr gsapReveal [gsapIndex]="i" class="table-row-glass">
+                <td class="py-2.5 font-semibold text-white">{{ u.username }}</td>
+                <td class="text-slate-400">{{ u.rol }}</td>
+                <td><app-status-badge [label]="u.activo ? 'Activo' : 'Inactivo'" [tone]="tone(u.activo)" /></td>
                 <td class="text-right">
-                  <button (click)="cambiarEstado(u)" class="text-brand-600 hover:underline text-xs">
+                  <button (click)="cambiarEstado(u)" class="text-xs font-medium text-accent-400 hover:text-accent-300">
                     {{ u.activo ? 'Desactivar' : 'Activar' }}
                   </button>
                 </td>
@@ -76,7 +75,7 @@ import { ToastService } from '../../shared/services/toast.service';
             }
           </tbody>
         </table>
-      </div>
+      </app-glass-card>
     </div>
   `
 })
@@ -84,6 +83,8 @@ export class UsersComponent implements OnInit {
   usuarios = signal<Usuario[]>([]);
   formVisible = signal(false);
   guardando = signal(false);
+
+  tone = boolTone;
 
   private fb = inject(FormBuilder);
 

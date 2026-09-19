@@ -1,93 +1,107 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { LucideBanknote, LucideDownload, LucideReceipt } from '@lucide/angular';
 import { ReporteService } from '../../core/services/reporte.service';
 import { ReporteIngresos, ReporteOcupacion } from '../../core/models/models';
 import { ToastService } from '../../shared/services/toast.service';
+import { GlassCardComponent } from '../../shared/ui/glass-card.component';
+import { StatTileComponent } from '../../shared/ui/stat-tile.component';
+import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directive';
 
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    GlassCardComponent,
+    StatTileComponent,
+    GsapRevealDirective,
+    LucideDownload,
+    LucideBanknote,
+    LucideReceipt
+  ],
   template: `
     <div class="space-y-6">
       <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-slate-800">Reportes</h2>
+          <h2 class="text-2xl font-bold tracking-tight text-white">Reportes</h2>
           <p class="text-sm text-slate-500">Ingresos, ocupacion y desempeno del estacionamiento</p>
         </div>
         <div class="flex items-end gap-2">
           <div>
-            <label class="block text-xs text-slate-500 mb-1">Desde</label>
-            <input type="date" [(ngModel)]="desde" class="border rounded-lg px-3 py-2 text-sm" />
+            <label class="label-eyebrow mb-1.5 block">Desde</label>
+            <input type="date" [(ngModel)]="desde" class="glass-input" />
           </div>
           <div>
-            <label class="block text-xs text-slate-500 mb-1">Hasta</label>
-            <input type="date" [(ngModel)]="hasta" class="border rounded-lg px-3 py-2 text-sm" />
+            <label class="label-eyebrow mb-1.5 block">Hasta</label>
+            <input type="date" [(ngModel)]="hasta" class="glass-input" />
           </div>
-          <button (click)="cargar()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-            Consultar
-          </button>
-          <button (click)="exportar()" class="bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium px-4 py-2 rounded-lg">
-            📥 Excel
+          <button (click)="cargar()" class="btn-primary">Consultar</button>
+          <button (click)="exportar()" class="btn-ghost">
+            <svg lucideDownload [size]="15"></svg> Excel
           </button>
         </div>
       </div>
 
       @if (ingresos(); as r) {
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-brand-500">
-            <p class="text-xs text-slate-500 uppercase">Total ingresos</p>
-            <p class="text-2xl font-bold text-slate-800">S/ {{ r.totalIngresos.toFixed(2) }}</p>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div gsapReveal [gsapIndex]="0">
+            <app-stat-tile label="Total ingresos" [value]="'S/ ' + r.totalIngresos.toFixed(2)" tone="accent">
+              <svg icon lucideBanknote [size]="19"></svg>
+            </app-stat-tile>
           </div>
-          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-500">
-            <p class="text-xs text-slate-500 uppercase">Sesiones cobradas</p>
-            <p class="text-2xl font-bold text-slate-800">{{ r.totalSesiones }}</p>
+          <div gsapReveal [gsapIndex]="1">
+            <app-stat-tile label="Sesiones cobradas" [value]="r.totalSesiones" tone="cyan">
+              <svg icon lucideReceipt [size]="19"></svg>
+            </app-stat-tile>
           </div>
-          <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-amber-500">
-            <p class="text-xs text-slate-500 uppercase">Ticket promedio</p>
-            <p class="text-2xl font-bold text-slate-800">S/ {{ ticketPromedio(r) }}</p>
+          <div gsapReveal [gsapIndex]="2">
+            <app-stat-tile label="Ticket promedio" [value]="'S/ ' + ticketPromedio(r)" tone="amber">
+              <svg icon lucideBanknote [size]="19"></svg>
+            </app-stat-tile>
           </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-5">
-          <h3 class="font-semibold text-slate-800 mb-4">Ingresos por dia</h3>
+        <app-glass-card padding="lg">
+          <p class="label-eyebrow mb-4">Ingresos por dia</p>
           <canvas #ingresosChart height="90"></canvas>
-        </div>
+        </app-glass-card>
       }
 
       @if (ocupacion(); as o) {
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="bg-white rounded-xl shadow-sm p-5">
-            <h3 class="font-semibold text-slate-800 mb-4">Ocupacion actual por tipo</h3>
-            <div class="space-y-3">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <app-glass-card padding="lg">
+            <p class="label-eyebrow mb-4">Ocupacion actual por tipo</p>
+            <div class="space-y-4">
               @for (t of o.porTipo; track t.tipo) {
                 <div>
-                  <div class="flex justify-between text-sm mb-1">
-                    <span>{{ t.tipo }} ({{ t.ocupadas }}/{{ t.total }})</span>
-                    <span>{{ t.porcentajeOcupacion }}%</span>
+                  <div class="mb-1.5 flex justify-between text-sm">
+                    <span class="text-slate-300">{{ t.tipo }} ({{ t.ocupadas }}/{{ t.total }})</span>
+                    <span class="font-semibold text-white">{{ t.porcentajeOcupacion }}%</span>
                   </div>
-                  <div class="w-full bg-gray-100 rounded-full h-2.5">
-                    <div class="bg-brand-600 h-2.5 rounded-full" [style.width.%]="t.porcentajeOcupacion"></div>
+                  <div class="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                    <div class="h-2 rounded-full bg-gradient-to-r from-accent-500 to-cyan-400 transition-all duration-500" [style.width.%]="t.porcentajeOcupacion"></div>
                   </div>
                 </div>
               }
             </div>
-          </div>
-          <div class="bg-white rounded-xl shadow-sm p-5">
-            <h3 class="font-semibold text-slate-800 mb-4">Plazas mas utilizadas</h3>
-            <div class="space-y-2">
+          </app-glass-card>
+          <app-glass-card padding="lg">
+            <p class="label-eyebrow mb-4">Plazas mas utilizadas</p>
+            <div class="space-y-1">
               @for (p of o.plazasMasUsadas; track p.codigo) {
-                <div class="flex justify-between text-sm border-b py-1.5">
-                  <span>{{ p.codigo }}</span>
-                  <span class="font-semibold">{{ p.totalSesiones }} sesiones</span>
+                <div class="flex justify-between border-b border-white/[0.06] py-2 text-sm last:border-0">
+                  <span class="text-slate-300">{{ p.codigo }}</span>
+                  <span class="font-semibold text-white">{{ p.totalSesiones }} sesiones</span>
                 </div>
               }
               @if (o.plazasMasUsadas.length === 0) {
-                <p class="text-sm text-slate-400">Sin datos en el periodo seleccionado.</p>
+                <p class="py-6 text-center text-sm text-slate-500">Sin datos en el periodo seleccionado.</p>
               }
             </div>
-          </div>
+          </app-glass-card>
         </div>
       }
     </div>
@@ -146,6 +160,9 @@ export class ReportsComponent implements AfterViewInit, OnDestroy {
     const { Chart, registerables } = await import('chart.js');
     Chart.register(...registerables);
 
+    const gridColor = 'rgba(255,255,255,0.06)';
+    const textColor = '#8B93A7';
+
     this.chart?.destroy();
     this.chart = new Chart(this.ingresosChartRef.nativeElement, {
       type: 'bar',
@@ -155,14 +172,30 @@ export class ReportsComponent implements AfterViewInit, OnDestroy {
           {
             label: 'Ingresos (S/)',
             data: r.porDia.map((d) => d.total),
-            backgroundColor: '#2563eb'
+            backgroundColor: '#22c55e',
+            borderRadius: 6,
+            maxBarThickness: 36
           }
         ]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0d1424',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#cbd5e1',
+            padding: 10,
+            cornerRadius: 8
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } },
+          x: { grid: { display: false }, ticks: { color: textColor } }
+        }
       }
     });
   }

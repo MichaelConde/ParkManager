@@ -8,11 +8,88 @@ html, body {
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-  background-color: #f3f4f6;
-  color: #111827;
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at 15% 0%, rgba(34, 197, 94, 0.08), transparent 40%),
+              radial-gradient(circle at 85% 15%, rgba(34, 211, 238, 0.07), transparent 45%),
+              #05070d;
+  color: #e6eaf2;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Scrollbar oscuro, discreto */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+@layer components {
+  .glass-panel {
+    @apply relative rounded-2.5xl border border-white/[0.08] bg-ink-800/60 backdrop-blur-xl shadow-panel;
+  }
+
+  .glass-panel-strong {
+    @apply relative rounded-2.5xl border border-white/[0.1] bg-ink-800/80 backdrop-blur-xl shadow-panel;
+  }
+
+  .glass-input {
+    @apply w-full rounded-xl border border-white/[0.08] bg-ink-900/70 px-3.5 py-2.5 text-sm text-slate-100
+           placeholder:text-slate-500 outline-none transition-all duration-200
+           focus:border-accent-500/60 focus:bg-ink-900 focus:ring-4 focus:ring-accent-500/10;
+  }
+
+  .label-eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-b from-accent-400 to-accent-600
+           px-5 py-2.5 text-sm font-semibold text-ink-950 shadow-glow-sm transition-all duration-200
+           hover:brightness-110 hover:-translate-y-px active:translate-y-0 active:brightness-95
+           disabled:opacity-40 disabled:hover:brightness-100 disabled:hover:translate-y-0 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.03]
+           px-5 py-2.5 text-sm font-medium text-slate-300 transition-all duration-200
+           hover:bg-white/[0.07] hover:text-white hover:border-white/20
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .btn-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]
+           text-slate-300 transition-all duration-200 hover:bg-white/[0.08] hover:text-white;
+  }
+
+  .btn-danger-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/[0.06]
+           px-3.5 py-1.5 text-xs font-medium text-red-300 transition-all duration-200
+           hover:bg-red-500/15 hover:text-red-200
+           disabled:opacity-30 disabled:cursor-not-allowed;
+  }
+
+  .pill-toggle {
+    @apply relative inline-flex items-center rounded-full border border-white/10 bg-ink-900/70 p-1;
+  }
+
+  .table-row-glass {
+    @apply border-b border-white/[0.05] transition-colors duration-150 hover:bg-white/[0.03];
+  }
 }

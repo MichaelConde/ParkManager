@@ -1,77 +1,95 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { LucideCarFront, LucideGauge, LucideSquareParking, LucideUsers } from '@lucide/angular';
 import { PlazaService } from '../../core/services/plaza.service';
 import { SesionService } from '../../core/services/sesion.service';
 import { Plaza, Sesion } from '../../core/models/models';
+import { GlassCardComponent } from '../../shared/ui/glass-card.component';
+import { StatTileComponent } from '../../shared/ui/stat-tile.component';
+import { StatusBadgeComponent } from '../../shared/ui/status-badge.component';
+import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directive';
+import { ParkingSceneComponent } from './parking-3d/parking-scene.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule,
+    GlassCardComponent,
+    StatTileComponent,
+    StatusBadgeComponent,
+    GsapRevealDirective,
+    ParkingSceneComponent,
+    LucideCarFront,
+    LucideSquareParking,
+    LucideUsers,
+    LucideGauge
+  ],
   template: `
     <div class="space-y-6">
-      <div>
-        <h2 class="text-2xl font-bold text-slate-800">Dashboard</h2>
+      <div gsapReveal [gsapIndex]="0">
+        <h2 class="text-2xl font-bold tracking-tight text-white">Dashboard</h2>
         <p class="text-sm text-slate-500">Vision general de ocupacion e ingresos en tiempo real</p>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-brand-500">
-          <p class="text-xs text-slate-500 uppercase tracking-wide">Sesiones activas</p>
-          <p class="text-3xl font-bold text-slate-800 mt-1">{{ sesionesActivas().length }}</p>
+      <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div gsapReveal [gsapIndex]="1">
+          <app-stat-tile label="Sesiones activas" [value]="sesionesActivas().length" tone="accent">
+            <svg icon lucideCarFront [size]="19"></svg>
+          </app-stat-tile>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-green-500">
-          <p class="text-xs text-slate-500 uppercase tracking-wide">Plazas libres</p>
-          <p class="text-3xl font-bold text-slate-800 mt-1">{{ libres() }}</p>
+        <div gsapReveal [gsapIndex]="2">
+          <app-stat-tile label="Plazas libres" [value]="libres()" tone="cyan">
+            <svg icon lucideSquareParking [size]="19"></svg>
+          </app-stat-tile>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-red-500">
-          <p class="text-xs text-slate-500 uppercase tracking-wide">Plazas ocupadas</p>
-          <p class="text-3xl font-bold text-slate-800 mt-1">{{ ocupadas() }}</p>
+        <div gsapReveal [gsapIndex]="3">
+          <app-stat-tile label="Plazas ocupadas" [value]="ocupadas()" tone="violet">
+            <svg icon lucideUsers [size]="19"></svg>
+          </app-stat-tile>
         </div>
-        <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-amber-500">
-          <p class="text-xs text-slate-500 uppercase tracking-wide">Ocupacion total</p>
-          <p class="text-3xl font-bold text-slate-800 mt-1">{{ porcentajeOcupacion() }}%</p>
+        <div gsapReveal [gsapIndex]="4">
+          <app-stat-tile label="Ocupacion total" [value]="porcentajeOcupacion() + '%'" tone="amber">
+            <svg icon lucideGauge [size]="19"></svg>
+          </app-stat-tile>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-5">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-slate-800">Mapa de plazas</h3>
-            <a routerLink="/sesiones" class="text-sm text-brand-600 hover:underline">Ir a ingreso/salida →</a>
-          </div>
-          <div class="grid grid-cols-6 sm:grid-cols-8 gap-2">
-            @for (p of plazas(); track p.id) {
-              <div class="aspect-square rounded-lg flex items-center justify-center text-[11px] font-semibold text-white"
-                   [class.bg-red-500]="p.estado === 'OCUPADA'"
-                   [class.bg-green-500]="p.estado === 'LIBRE'"
-                   [title]="p.codigo + ' - ' + p.tipo + ' - ' + p.estado">
-                {{ p.codigo }}
-              </div>
-            }
-          </div>
-          @if (plazas().length === 0) {
-            <p class="text-sm text-slate-400 text-center py-6">No hay plazas configuradas todavia.</p>
-          }
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div gsapReveal [gsapIndex]="5" class="lg:col-span-2">
+          <app-glass-card padding="lg" [glow]="true">
+            <div class="mb-4 flex items-center justify-between">
+              <p class="label-eyebrow">Mapa de plazas</p>
+              <p class="text-[11px] text-slate-600">Arrastra para rotar</p>
+            </div>
+            <div class="h-[420px] overflow-hidden rounded-xl bg-black/20">
+              <app-parking-scene [plazas]="plazas()" [sesiones]="sesionesActivas()" />
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-4">
+              <app-status-badge label="Disponible" tone="available" />
+              <app-status-badge label="Ocupado" tone="occupied" />
+            </div>
+          </app-glass-card>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-5">
-          <h3 class="font-semibold text-slate-800 mb-4">Sesiones activas</h3>
-          <div class="space-y-2 max-h-96 overflow-y-auto">
-            @for (s of sesionesActivas(); track s.id) {
-              <div class="border rounded-lg px-3 py-2 text-sm">
-                <div class="flex justify-between">
-                  <span class="font-semibold">{{ s.placa }}</span>
-                  <span class="text-slate-500">{{ s.plazaCodigo }}</span>
+        <div gsapReveal [gsapIndex]="6">
+          <app-glass-card padding="lg">
+            <p class="label-eyebrow mb-4">Sesiones activas</p>
+            <div class="max-h-[440px] space-y-2 overflow-y-auto">
+              @for (s of sesionesActivas(); track s.id; let i = $index) {
+                <div gsapReveal [gsapIndex]="i" class="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 text-sm transition-colors hover:bg-white/[0.05]">
+                  <div class="flex items-center justify-between">
+                    <span class="font-semibold text-white">{{ s.placa }}</span>
+                    <span class="text-xs text-slate-500">{{ s.plazaCodigo }}</span>
+                  </div>
+                  <p class="mt-0.5 text-[11px] text-slate-500">Desde {{ s.horaEntrada | date: 'short' }}</p>
                 </div>
-                <p class="text-xs text-slate-400">Desde {{ s.horaEntrada | date: 'short' }}</p>
-              </div>
-            }
-            @if (sesionesActivas().length === 0) {
-              <p class="text-sm text-slate-400 text-center py-6">No hay vehiculos estacionados actualmente.</p>
-            }
-          </div>
+              }
+              @if (sesionesActivas().length === 0) {
+                <p class="py-10 text-center text-sm text-slate-500">No hay vehiculos estacionados actualmente.</p>
+              }
+            </div>
+          </app-glass-card>
         </div>
       </div>
     </div>

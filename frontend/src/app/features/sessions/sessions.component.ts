@@ -1,146 +1,196 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  LucideCamera,
+  LucideCircleCheckBig,
+  LucideHash,
+  LucideIdCard,
+  LucideLogIn,
+  LucideLogOut,
+  LucidePrinter,
+  LucideScanLine,
+  LucideSearch,
+  LucideX
+} from '@lucide/angular';
 import { SesionService } from '../../core/services/sesion.service';
 import { MetodoPago, Recibo, Sesion, TipoVehiculo } from '../../core/models/models';
 import { ToastService } from '../../shared/services/toast.service';
+import { GlassCardComponent } from '../../shared/ui/glass-card.component';
+import { VehiclePreviewComponent } from '../../shared/three/vehicle-preview.component';
 
 type Tab = 'ingreso' | 'salida';
 
 @Component({
   selector: 'app-sessions',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    GlassCardComponent,
+    VehiclePreviewComponent,
+    LucideLogIn,
+    LucideLogOut,
+    LucidePrinter,
+    LucideScanLine,
+    LucideCamera,
+    LucideSearch,
+    LucideCircleCheckBig,
+    LucideX,
+    LucideIdCard,
+    LucideHash
+  ],
   template: `
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-slate-800">Ingreso / Salida de vehiculos</h2>
+        <h2 class="text-2xl font-bold tracking-tight text-white">Ingreso / Salida de vehiculos</h2>
         <p class="text-sm text-slate-500">Registra el ingreso, calcula la tarifa y cobra al salir</p>
       </div>
 
-      <div class="flex gap-2 border-b">
-        <button (click)="tab.set('ingreso')" class="px-4 py-2 text-sm font-medium border-b-2 -mb-px"
-                [class.border-brand-600]="tab() === 'ingreso'" [class.text-brand-600]="tab() === 'ingreso'"
-                [class.border-transparent]="tab() !== 'ingreso'" [class.text-slate-500]="tab() !== 'ingreso'">
-          🚗 Ingreso
+      <div class="pill-toggle w-fit">
+        <button (click)="tab.set('ingreso')"
+                class="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200"
+                [ngClass]="tab() === 'ingreso' ? 'bg-accent-500 text-ink-950 shadow-glow-sm' : 'text-slate-400 hover:text-white'">
+          <svg lucideLogIn [size]="15"></svg>
+          Ingreso
         </button>
-        <button (click)="tab.set('salida')" class="px-4 py-2 text-sm font-medium border-b-2 -mb-px"
-                [class.border-brand-600]="tab() === 'salida'" [class.text-brand-600]="tab() === 'salida'"
-                [class.border-transparent]="tab() !== 'salida'" [class.text-slate-500]="tab() !== 'salida'">
-          💵 Salida
+        <button (click)="tab.set('salida')"
+                class="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200"
+                [ngClass]="tab() === 'salida' ? 'bg-accent-500 text-ink-950 shadow-glow-sm' : 'text-slate-400 hover:text-white'">
+          <svg lucideLogOut [size]="15"></svg>
+          Salida
         </button>
       </div>
 
       <!-- INGRESO -->
       @if (tab() === 'ingreso') {
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="bg-white rounded-xl shadow-sm p-5">
-            <h3 class="font-semibold text-slate-800 mb-4">Registrar ingreso</h3>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <app-glass-card padding="lg">
+            <p class="label-eyebrow mb-4">Registrar ingreso</p>
             <form [formGroup]="formIngreso" (ngSubmit)="registrarIngreso()" class="space-y-4">
               <div>
-                <label class="block text-xs text-slate-500 mb-1">Placa</label>
-                <input formControlName="placa" type="text"
-                       class="w-full border rounded-lg px-3 py-2 text-sm uppercase" placeholder="ABC-123" />
+                <label class="label-eyebrow mb-1.5 block">Placa</label>
+                <input formControlName="placa" type="text" class="glass-input uppercase" placeholder="ABC-123" />
               </div>
               <div>
-                <label class="block text-xs text-slate-500 mb-1">Tipo de vehiculo</label>
-                <select formControlName="tipo" class="w-full border rounded-lg px-3 py-2 text-sm">
+                <label class="label-eyebrow mb-1.5 block">Tipo de vehiculo</label>
+                <select formControlName="tipo" class="glass-input">
                   <option value="AUTO">AUTO</option>
                   <option value="MOTO">MOTO</option>
                 </select>
               </div>
               <div>
-                <label class="block text-xs text-slate-500 mb-1">Modelo (opcional)</label>
-                <input formControlName="modelo" type="text" class="w-full border rounded-lg px-3 py-2 text-sm" />
+                <label class="label-eyebrow mb-1.5 block">Modelo (opcional)</label>
+                <input formControlName="modelo" type="text" class="glass-input" />
               </div>
               <div>
-                <label class="block text-xs text-slate-500 mb-1">ID de cliente (opcional, para membresias)</label>
-                <input formControlName="clienteId" type="number" class="w-full border rounded-lg px-3 py-2 text-sm" />
+                <label class="label-eyebrow mb-1.5 block">ID de cliente (opcional, para membresias)</label>
+                <input formControlName="clienteId" type="number" class="glass-input" />
               </div>
-              <button type="submit" [disabled]="formIngreso.invalid || procesando()"
-                      class="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg">
+              <button type="submit" [disabled]="formIngreso.invalid || procesando()" class="btn-primary w-full !py-2.5">
                 {{ procesando() ? 'Procesando...' : 'Registrar ingreso' }}
               </button>
             </form>
-          </div>
+          </app-glass-card>
 
-          <div class="bg-white rounded-xl shadow-sm p-5 flex flex-col items-center justify-center">
+          <app-glass-card padding="lg" [hoverable]="false">
             @if (ultimoIngreso(); as s) {
-              <h3 class="font-semibold text-slate-800 mb-2">Ticket generado</h3>
-              <img [src]="s.qrImageBase64" alt="QR" class="w-40 h-40 mb-3" />
-              <p class="text-sm text-slate-600">Placa: <b>{{ s.placa }}</b></p>
-              <p class="text-sm text-slate-600">Plaza asignada: <b>{{ s.plazaCodigo }}</b></p>
-              <p class="text-sm text-slate-600">Hora de entrada: {{ s.horaEntrada | date: 'short' }}</p>
-              <p class="text-xs text-slate-400 mt-2">Codigo: {{ s.codigoQr }}</p>
-              <button (click)="imprimirTicket(s)" class="mt-4 text-sm bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900">
-                🖨️ Imprimir ticket
-              </button>
+              <div class="flex flex-col items-center text-center">
+                <p class="label-eyebrow mb-2">Ticket generado</p>
+                <div class="mb-2 h-40 w-full max-w-[220px]">
+                  <app-vehicle-preview [tipo]="s.tipoVehiculo" [seed]="s.codigoQr" />
+                </div>
+                <img [src]="s.qrImageBase64" alt="QR" class="mb-3 h-28 w-28 rounded-lg border border-white/10 bg-white p-1" />
+                <p class="text-sm text-slate-300">Placa: <b class="text-white">{{ s.placa }}</b></p>
+                <p class="text-sm text-slate-300">Plaza asignada: <b class="text-white">{{ s.plazaCodigo }}</b></p>
+                <p class="text-sm text-slate-300">Hora de entrada: {{ s.horaEntrada | date: 'short' }}</p>
+                <p class="mt-2 flex items-center gap-1 text-[11px] text-slate-600">
+                  <svg lucideHash [size]="11"></svg>{{ s.codigoQr }}
+                </p>
+                <button (click)="imprimirTicket(s)" class="btn-ghost mt-4">
+                  <svg lucidePrinter [size]="15"></svg>
+                  Imprimir ticket
+                </button>
+              </div>
             } @else {
-              <p class="text-sm text-slate-400">El ticket con codigo QR aparecera aqui despues de registrar el ingreso.</p>
+              <div class="flex h-full min-h-[280px] flex-col items-center justify-center text-center">
+                <p class="text-sm text-slate-500">El ticket con codigo QR aparecera aqui despues de registrar el ingreso.</p>
+              </div>
             }
-          </div>
+          </app-glass-card>
         </div>
       }
 
       <!-- SALIDA -->
       @if (tab() === 'salida') {
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="bg-white rounded-xl shadow-sm p-5">
-            <h3 class="font-semibold text-slate-800 mb-4">Buscar sesion activa</h3>
-            <div class="flex gap-2 mb-4">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <app-glass-card padding="lg">
+            <p class="label-eyebrow mb-4">Buscar sesion activa</p>
+            <div class="mb-4 flex gap-2">
               <input [(ngModel)]="placaBusqueda" [ngModelOptions]="{standalone: true}" type="text"
-                     placeholder="Placa (ej. ABC-123)" class="flex-1 border rounded-lg px-3 py-2 text-sm uppercase" />
-              <button (click)="buscarPorPlaca()" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-                Buscar
+                     placeholder="Placa (ej. ABC-123)" class="glass-input flex-1 uppercase" />
+              <button (click)="buscarPorPlaca()" class="btn-primary !px-4">
+                <svg lucideSearch [size]="15"></svg>
               </button>
             </div>
-            <button (click)="alternarScanner()" class="w-full text-sm border border-dashed rounded-lg py-2 text-slate-600 hover:bg-slate-50 mb-4">
-              {{ escaneando() ? '✕ Cerrar camara' : '📷 Escanear QR del ticket' }}
+            <button (click)="alternarScanner()" class="btn-ghost mb-4 w-full">
+              @if (escaneando()) {
+                <svg lucideX [size]="15"></svg> Cerrar camara
+              } @else {
+                <svg lucideScanLine [size]="15"></svg> Escanear QR del ticket
+              }
             </button>
             @if (escaneando()) {
-              <div id="qr-reader" class="rounded-lg overflow-hidden border mb-4"></div>
+              <div id="qr-reader" class="mb-4 overflow-hidden rounded-xl border border-white/10"></div>
             }
 
             @if (sesionEncontrada(); as s) {
-              <div class="border rounded-lg p-4 space-y-1 bg-slate-50">
-                <p class="text-sm"><b>Placa:</b> {{ s.placa }} ({{ s.tipoVehiculo }})</p>
-                <p class="text-sm"><b>Plaza:</b> {{ s.plazaCodigo }}</p>
-                <p class="text-sm"><b>Entrada:</b> {{ s.horaEntrada | date: 'short' }}</p>
-                <p class="text-sm"><b>Tiempo transcurrido:</b> {{ s.duracionMinutos }} min</p>
-                <p class="text-lg font-bold text-brand-700">
+              <div class="animate-fade-in space-y-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+                <p class="text-sm text-slate-300"><b class="text-white">Placa:</b> {{ s.placa }} ({{ s.tipoVehiculo }})</p>
+                <p class="text-sm text-slate-300"><b class="text-white">Plaza:</b> {{ s.plazaCodigo }}</p>
+                <p class="text-sm text-slate-300"><b class="text-white">Entrada:</b> {{ s.horaEntrada | date: 'short' }}</p>
+                <p class="text-sm text-slate-300"><b class="text-white">Tiempo transcurrido:</b> {{ s.duracionMinutos }} min</p>
+                <p class="text-lg font-bold text-accent-400">
                   {{ s.membresiaAplicada ? 'Membresia activa: sin cargo' : 'Monto estimado: S/ ' + s.montoCobrado?.toFixed(2) }}
                 </p>
 
-                <div class="pt-3 border-t mt-3">
-                  <label class="block text-xs text-slate-500 mb-1">Metodo de pago</label>
-                  <select [(ngModel)]="metodoPago" [ngModelOptions]="{standalone: true}" class="w-full border rounded-lg px-3 py-2 text-sm mb-3">
+                <div class="mt-3 border-t border-white/[0.08] pt-3">
+                  <label class="label-eyebrow mb-1.5 block">Metodo de pago</label>
+                  <select [(ngModel)]="metodoPago" [ngModelOptions]="{standalone: true}" class="glass-input mb-3">
                     <option value="EFECTIVO">Efectivo</option>
                     <option value="TARJETA">Tarjeta</option>
                     <option value="OTRO">Otro</option>
                   </select>
-                  <button (click)="confirmarSalida(s)" [disabled]="procesando()"
-                          class="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg">
+                  <button (click)="confirmarSalida(s)" [disabled]="procesando()" class="btn-primary w-full !py-2.5">
                     {{ procesando() ? 'Procesando...' : 'Confirmar salida y cobrar' }}
                   </button>
                 </div>
               </div>
             }
-          </div>
+          </app-glass-card>
 
-          <div class="bg-white rounded-xl shadow-sm p-5 flex flex-col items-center justify-center">
+          <app-glass-card padding="lg">
             @if (ultimoRecibo(); as r) {
-              <h3 class="font-semibold text-slate-800 mb-2">✅ Comprobante</h3>
-              <p class="text-sm text-slate-600">Placa: <b>{{ r.sesion.placa }}</b></p>
-              <p class="text-sm text-slate-600">Duracion: {{ r.sesion.duracionMinutos }} min</p>
-              <p class="text-sm text-slate-600">Metodo de pago: {{ r.pago.metodo }}</p>
-              <p class="text-2xl font-bold text-green-700 mt-2">S/ {{ r.pago.monto.toFixed(2) }}</p>
-              <button (click)="imprimirRecibo(r)" class="mt-4 text-sm bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900">
-                🖨️ Imprimir comprobante
-              </button>
+              <div class="flex flex-col items-center text-center">
+                <p class="mb-2 flex items-center gap-1.5 text-sm font-semibold text-accent-400">
+                  <svg lucideCircleCheckBig [size]="17"></svg> Comprobante
+                </p>
+                <p class="text-sm text-slate-300">Placa: <b class="text-white">{{ r.sesion.placa }}</b></p>
+                <p class="text-sm text-slate-300">Duracion: {{ r.sesion.duracionMinutos }} min</p>
+                <p class="text-sm text-slate-300">Metodo de pago: {{ r.pago.metodo }}</p>
+                <p class="mt-2 text-3xl font-bold text-white">S/ {{ r.pago.monto.toFixed(2) }}</p>
+                <button (click)="imprimirRecibo(r)" class="btn-ghost mt-4">
+                  <svg lucidePrinter [size]="15"></svg>
+                  Imprimir comprobante
+                </button>
+              </div>
             } @else {
-              <p class="text-sm text-slate-400">El comprobante de pago aparecera aqui despues de confirmar la salida.</p>
+              <div class="flex h-full min-h-[280px] flex-col items-center justify-center text-center">
+                <p class="text-sm text-slate-500">El comprobante de pago aparecera aqui despues de confirmar la salida.</p>
+              </div>
             }
-          </div>
+          </app-glass-card>
         </div>
       }
     </div>
