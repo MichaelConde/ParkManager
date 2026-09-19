@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideBanknote, LucideDownload, LucideReceipt } from '@lucide/angular';
 import { ReporteService } from '../../core/services/reporte.service';
@@ -118,7 +118,7 @@ export class ReportsComponent implements AfterViewInit, OnDestroy {
 
   private chart: any = null;
 
-  constructor(private reporteService: ReporteService, private toast: ToastService) {}
+  constructor(private reporteService: ReporteService, private toast: ToastService, private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
     this.cargar();
@@ -131,7 +131,8 @@ export class ReportsComponent implements AfterViewInit, OnDestroy {
   cargar(): void {
     this.reporteService.ingresos(this.desde, this.hasta).subscribe((r) => {
       this.ingresos.set(r);
-      setTimeout(() => this.pintarGrafica(r), 0);
+      this.cdr.detectChanges();
+      this.pintarGrafica(r);
     });
     this.reporteService.ocupacion(this.desde, this.hasta).subscribe((o) => this.ocupacion.set(o));
   }
