@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from '@angular/core';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { TipoVehiculo } from '../../core/models/models';
@@ -13,7 +13,7 @@ import { VehicleModelService } from '../../core/services/vehicle-model.service';
     </div>
   `
 })
-export class VehiclePreviewComponent implements AfterViewInit, OnDestroy {
+export class VehiclePreviewComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input({ required: true }) tipo!: TipoVehiculo;
   @Input({ required: true }) seed!: string;
 
@@ -26,6 +26,9 @@ export class VehiclePreviewComponent implements AfterViewInit, OnDestroy {
   private raf = 0;
   private rig = new THREE.Group();
   private resizeObserver?: ResizeObserver;
+  private viewReady = false;
+  private currentInstance?: THREE.Group;
+  private loadToken = 0;
 
   constructor(private vehicleModelService: VehicleModelService) {}
 
@@ -49,16 +52,47 @@ export class VehiclePreviewComponent implements AfterViewInit, OnDestroy {
 
     this.scene.add(this.rig);
 
-    const instance = await this.vehicleModelService.createInstance(this.tipo, this.seed);
-    this.rig.add(instance);
-
-    gsap.fromTo(this.rig.scale, { x: 0, y: 0, z: 0 }, { x: 1, y: 1, z: 1, duration: 0.6, ease: 'back.out(1.7)' });
-    gsap.to(this.rig.rotation, { y: Math.PI * 2, duration: 9, repeat: -1, ease: 'none' });
+    this.viewReady = true;
+    await this.loadModel();
 
     this.resizeObserver = new ResizeObserver(() => this.onResize());
     this.resizeObserver.observe(host);
 
     this.animate();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // El primer set de inputs se resuelve en ngAfterViewInit, cuando la
+    // escena ya existe; aqui solo reaccionamos a cambios posteriores
+    // (p.ej. se registra un nuevo vehiculo sin recrear este componente).
+    if (!this.viewReady) return;
+    if (changes['tipo'] || changes['seed']) {
+      this.loadModel();
+    }
+  }
+
+  private async loadModel(): Promise<void> {
+    const token = ++this.loadToken;
+    const instance = await this.vehicleModelService.createInstance(this.tipo, this.seed);
+    if (token !== this.loadToken) {
+      // Llego una recarga mas reciente mientras esta se resolvia: descartar.
+      this.vehicleModelService.disposeInstance(instance);
+      return;
+    }
+
+    if (this.currentInstance) {
+      this.rig.remove(this.currentInstance);
+      this.vehicleModelService.disposeInstance(this.currentInstance);
+    }
+    this.currentInstance = instance;
+    this.rig.add(instance);
+
+    gsap.killTweensOf(this.rig.scale);
+    gsap.killTweensOf(this.rig.rotation);
+    this.rig.scale.set(0, 0, 0);
+    this.rig.rotation.set(0, 0, 0);
+    gsap.fromTo(this.rig.scale, { x: 0, y: 0, z: 0 }, { x: 1, y: 1, z: 1, duration: 0.6, ease: 'back.out(1.7)' });
+    gsap.to(this.rig.rotation, { y: Math.PI * 2, duration: 9, repeat: -1, ease: 'none' });
   }
 
   private onResize(): void {

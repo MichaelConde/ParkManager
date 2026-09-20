@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { LucideCarFront, LucideGauge, LucideSquareParking, LucideUsers } from '@lucide/angular';
+import { LucideCarFront, LucideGauge, LucideMotorbike, LucideSquareParking, LucideUsers } from '@lucide/angular';
 import { PlazaService } from '../../core/services/plaza.service';
 import { SesionService } from '../../core/services/sesion.service';
 import { Plaza, Sesion } from '../../core/models/models';
@@ -9,6 +9,7 @@ import { StatTileComponent } from '../../shared/ui/stat-tile.component';
 import { StatusBadgeComponent } from '../../shared/ui/status-badge.component';
 import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directive';
 import { ParkingSceneComponent } from './parking-3d/parking-scene.component';
+import { colorForSeed } from '../../shared/three/car-palette';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,6 +22,7 @@ import { ParkingSceneComponent } from './parking-3d/parking-scene.component';
     GsapRevealDirective,
     ParkingSceneComponent,
     LucideCarFront,
+    LucideMotorbike,
     LucideSquareParking,
     LucideUsers,
     LucideGauge
@@ -79,7 +81,15 @@ import { ParkingSceneComponent } from './parking-3d/parking-scene.component';
               @for (s of sesionesActivas(); track s.id; let i = $index) {
                 <div gsapReveal [gsapIndex]="i" class="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 text-sm transition-colors hover:bg-white/[0.05]">
                   <div class="flex items-center justify-between">
-                    <span class="font-semibold text-white">{{ s.placa }}</span>
+                    <span class="flex items-center gap-2">
+                      <span class="h-2.5 w-2.5 shrink-0 rounded-full" [style.background]="colorHex(s.codigoQr)" [style.box-shadow]="'0 0 6px 0 ' + colorHex(s.codigoQr)"></span>
+                      @if (s.tipoVehiculo === 'AUTO') {
+                        <svg lucideCarFront [size]="13" class="shrink-0 text-slate-500"></svg>
+                      } @else {
+                        <svg lucideMotorbike [size]="13" class="shrink-0 text-slate-500"></svg>
+                      }
+                      <span class="font-semibold text-white">{{ s.placa }}</span>
+                    </span>
                     <span class="text-xs text-slate-500">{{ s.plazaCodigo }}</span>
                   </div>
                   <p class="mt-0.5 text-[11px] text-slate-500">Desde {{ s.horaEntrada | date: 'short' }}</p>
@@ -107,6 +117,10 @@ export class DashboardComponent implements OnInit {
   });
 
   constructor(private plazaService: PlazaService, private sesionService: SesionService) {}
+
+  colorHex(seed: string): string {
+    return '#' + colorForSeed(seed).toString(16).padStart(6, '0');
+  }
 
   ngOnInit(): void {
     this.cargar();

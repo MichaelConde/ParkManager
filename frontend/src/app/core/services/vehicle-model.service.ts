@@ -17,13 +17,16 @@ interface ModelDefinition {
 
 // Escalas calculadas a partir del bounding box real de cada .glb (ver
 // `gltf-transform inspect`), no valores adivinados:
-//  - Hatch: bbox X (largo, eje local) = 929.5 unidades -> se escala a ~4.2m
+//  - Hatch: bbox X (largo, eje local) = 859.1 unidades -> se escala a ~4.2m
+//    (el .obj original tenia un hueco topologico entre la mitad delantera
+//    y trasera -confirmado reprocesando la fuente sin decimar-, cerrado
+//    desplazando la mitad trasera; de ahi que el largo bajara de 929.5).
 //  - Bike:  bbox Z (largo, eje local) = 14.98 unidades -> se escala a ~2.0m
 const MODEL_DEFS: Record<TipoVehiculo, ModelDefinition> = {
   AUTO: {
     url: 'models/vehicle-auto.glb',
     paintMaterials: ['Paint_Metallic_Coupe', 'Paint_Metallic'],
-    scale: 4.2 / 929.54,
+    scale: 4.2 / 859.13,
     rotationY: Math.PI / 2
   },
   MOTO: {
