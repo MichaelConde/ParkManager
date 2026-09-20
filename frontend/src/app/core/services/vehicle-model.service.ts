@@ -17,17 +17,20 @@ interface ModelDefinition {
 
 // Escalas calculadas a partir del bounding box real de cada .glb (ver
 // `gltf-transform inspect`), no valores adivinados:
-//  - Hatch: bbox X (largo, eje local) = 859.1 unidades -> se escala a ~4.2m
-//    (el .obj original tenia un hueco topologico entre la mitad delantera
-//    y trasera -confirmado reprocesando la fuente sin decimar-, cerrado
-//    desplazando la mitad trasera; de ahi que el largo bajara de 929.5).
-//  - Bike:  bbox Z (largo, eje local) = 14.98 unidades -> se escala a ~2.0m
+//  - Auto: bbox Z (largo, eje local) = 4408.7 unidades -> se escala a ~4.3m.
+//    El eje largo del modelo ya viene alineado con Z, sin rotacion.
+//  - Bike: bbox Z (largo, eje local) = 14.98 unidades -> se escala a ~2.0m
 const MODEL_DEFS: Record<TipoVehiculo, ModelDefinition> = {
   AUTO: {
     url: 'models/vehicle-auto.glb',
-    paintMaterials: ['Paint_Metallic_Coupe', 'Paint_Metallic'],
-    scale: 4.2 / 859.13,
-    rotationY: Math.PI / 2
+    // "Paint Metallic Orange peel Cool Grey #1" (la pintura de carroceria
+    // dominante en el .obj original) y "Paint Metallic Cool Grey #1"
+    // comparten los mismos valores Kd/Ks/Ns en el .mtl generado, asi que
+    // gltfpack las fusiona en una sola al exportar; solo el segundo nombre
+    // sobrevive en el .glb final.
+    paintMaterials: ['Paint Metallic Cool Grey #1'],
+    scale: 4.3 / 4408.74,
+    rotationY: 0
   },
   MOTO: {
     url: 'models/vehicle-moto.glb',
