@@ -48,7 +48,7 @@ import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directi
       @if (ingresos(); as r) {
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div gsapReveal [gsapIndex]="0">
-            <app-stat-tile label="Total ingresos" [value]="'S/ ' + r.totalIngresos.toFixed(2)" tone="accent">
+            <app-stat-tile label="Total ingresos" [value]="'$' + r.totalIngresos.toFixed(2)" tone="accent">
               <svg icon lucideBanknote [size]="19"></svg>
             </app-stat-tile>
           </div>
@@ -58,7 +58,7 @@ import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directi
             </app-stat-tile>
           </div>
           <div gsapReveal [gsapIndex]="2">
-            <app-stat-tile label="Ticket promedio" [value]="'S/ ' + ticketPromedio(r)" tone="amber">
+            <app-stat-tile label="Ticket promedio" [value]="'$' + ticketPromedio(r)" tone="amber">
               <svg icon lucideBanknote [size]="19"></svg>
             </app-stat-tile>
           </div>
@@ -171,7 +171,7 @@ export class ReportsComponent implements AfterViewInit, OnDestroy {
         labels: r.porDia.map((d) => d.fecha),
         datasets: [
           {
-            label: 'Ingresos (S/)',
+            label: 'Ingresos ($)',
             data: r.porDia.map((d) => d.total),
             backgroundColor: '#22c55e',
             borderRadius: 6,

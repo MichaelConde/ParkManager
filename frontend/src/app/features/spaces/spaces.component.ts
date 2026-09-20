@@ -49,7 +49,7 @@ interface ZonaResumen {
             <div gsapReveal [gsapIndex]="i" class="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3.5">
               <div>
                 <p class="text-xs text-slate-500">{{ t.tipoVehiculo }}</p>
-                <p class="text-xl font-bold text-white">S/ {{ t.precioHora.toFixed(2) }} <span class="text-sm font-normal text-slate-500">/ hora</span></p>
+                <p class="text-xl font-bold text-white">\${{ t.precioHora.toFixed(2) }} <span class="text-sm font-normal text-slate-500">/ hora</span></p>
               </div>
               <button (click)="editarTarifa(t)" class="btn-icon">
                 <svg lucidePencil [size]="14"></svg>
@@ -68,7 +68,7 @@ interface ZonaResumen {
               </select>
             </div>
             <div>
-              <label class="label-eyebrow mb-1.5 block">Precio por hora (S/)</label>
+              <label class="label-eyebrow mb-1.5 block">Precio por hora ($)</label>
               <input formControlName="precioHora" type="number" step="0.10" min="0.10" class="glass-input w-32" />
             </div>
             <button type="submit" [disabled]="formTarifa.invalid || guardandoTarifa()" class="btn-primary">Guardar</button>

@@ -133,7 +133,7 @@ import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directi
                   <div class="rounded-xl border border-white/[0.08] bg-white/[0.02] px-3.5 py-2.5 text-xs">
                     <div class="flex justify-between">
                       <span class="font-semibold text-white">{{ h.placa }}</span>
-                      <span class="text-slate-300">{{ h.montoCobrado != null ? 'S/ ' + h.montoCobrado.toFixed(2) : 'En curso' }}</span>
+                      <span class="text-slate-300">{{ h.montoCobrado != null ? '$' + h.montoCobrado.toFixed(2) : 'En curso' }}</span>
                     </div>
                     <p class="mt-0.5 text-slate-500">{{ h.horaEntrada | date: 'short' }} &mdash; {{ h.horaSalida ? (h.horaSalida | date: 'short') : 'activa' }}</p>
                   </div>

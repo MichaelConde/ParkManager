@@ -50,7 +50,7 @@ import { membresiaTone } from '../../shared/ui/status.util';
                 <input formControlName="duracionDias" type="number" min="1" class="glass-input w-28" />
               </div>
               <div>
-                <label class="label-eyebrow mb-1.5 block">Precio (S/)</label>
+                <label class="label-eyebrow mb-1.5 block">Precio ($)</label>
                 <input formControlName="precio" type="number" step="0.10" min="0.10" class="glass-input w-28" />
               </div>
               <div class="min-w-[160px] flex-1">
@@ -70,7 +70,7 @@ import { membresiaTone } from '../../shared/ui/status.util';
                   <p class="font-semibold text-white">{{ p.nombre }}</p>
                 </div>
                 <p class="mb-2 text-xs text-slate-500">{{ p.descripcion }}</p>
-                <p class="text-lg font-bold text-white">S/ {{ p.precio.toFixed(2) }}</p>
+                <p class="text-lg font-bold text-white">\${{ p.precio.toFixed(2) }}</p>
                 <p class="text-xs text-slate-500">{{ p.duracionDias }} dias</p>
                 @if (p.activo) {
                   <button (click)="desactivarPlan(p)" class="mt-2 text-xs font-medium text-red-400 hover:text-red-300">Desactivar</button>
@@ -92,7 +92,7 @@ import { membresiaTone } from '../../shared/ui/status.util';
             <label class="label-eyebrow mb-1.5 block">Plan</label>
             <select formControlName="planId" class="glass-input">
               @for (p of planesActivos(); track p.id) {
-                <option [value]="p.id">{{ p.nombre }} (S/ {{ p.precio.toFixed(2) }})</option>
+                <option [value]="p.id">{{ p.nombre }} (\${{ p.precio.toFixed(2) }})</option>
               }
             </select>
           </div>

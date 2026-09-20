@@ -152,7 +152,7 @@ type Tab = 'ingreso' | 'salida';
                 <p class="text-sm text-slate-300"><b class="text-white">Entrada:</b> {{ s.horaEntrada | date: 'short' }}</p>
                 <p class="text-sm text-slate-300"><b class="text-white">Tiempo transcurrido:</b> {{ s.duracionMinutos }} min</p>
                 <p class="text-lg font-bold text-accent-400">
-                  {{ s.membresiaAplicada ? 'Membresia activa: sin cargo' : 'Monto estimado: S/ ' + s.montoCobrado?.toFixed(2) }}
+                  {{ s.membresiaAplicada ? 'Membresia activa: sin cargo' : 'Monto estimado: $' + s.montoCobrado?.toFixed(2) }}
                 </p>
 
                 <div class="mt-3 border-t border-white/[0.08] pt-3">
@@ -179,7 +179,7 @@ type Tab = 'ingreso' | 'salida';
                 <p class="text-sm text-slate-300">Placa: <b class="text-white">{{ r.sesion.placa }}</b></p>
                 <p class="text-sm text-slate-300">Duracion: {{ r.sesion.duracionMinutos }} min</p>
                 <p class="text-sm text-slate-300">Metodo de pago: {{ r.pago.metodo }}</p>
-                <p class="mt-2 text-3xl font-bold text-white">S/ {{ r.pago.monto.toFixed(2) }}</p>
+                <p class="mt-2 text-3xl font-bold text-white">\${{ r.pago.monto.toFixed(2) }}</p>
                 <button (click)="imprimirRecibo(r)" class="btn-ghost mt-4">
                   <svg lucidePrinter [size]="15"></svg>
                   Imprimir comprobante
@@ -344,7 +344,7 @@ export class SessionsComponent implements OnDestroy {
         <p>Salida: ${r.sesion.horaSalida ? new Date(r.sesion.horaSalida).toLocaleString() : '-'}</p>
         <p>Duracion: ${r.sesion.duracionMinutos} min</p>
         <p>Metodo de pago: ${r.pago.metodo}</p>
-        <h3>Total: S/ ${r.pago.monto.toFixed(2)}</h3>
+        <h3>Total: $${r.pago.monto.toFixed(2)}</h3>
         <script>window.onload = () => window.print();</script>
       </body></html>
     `);
