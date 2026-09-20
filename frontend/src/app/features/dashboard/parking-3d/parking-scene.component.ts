@@ -328,11 +328,29 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
 
     // Ingresos: sesiones activas sin instancia todavia
     for (const sesion of this.sesiones) {
-      if (this.instances.has(sesion.codigoQr) || this.pendingSpawns.has(sesion.codigoQr)) continue;
       const slot = this.slots.get(sesion.plazaCodigo);
       if (!slot) continue;
+
+      const instance = this.instances.get(sesion.codigoQr);
+      if (instance) {
+        // El layout se recalcula por completo en cada rebuildPads() (p. ej.
+        // al cambiar de pestana de zona o al variar la cantidad de plazas),
+        // asi que una instancia ya montada puede haber quedado con las
+        // coordenadas de un layout anterior; se reubica sin re-animar el
+        // spawn.
+        this.repositionIfNeeded(instance, slot);
+        continue;
+      }
+      if (this.pendingSpawns.has(sesion.codigoQr)) continue;
       this.spawnVehicle(sesion, slot);
     }
+  }
+
+  private repositionIfNeeded(instance: THREE.Group, slot: PlazaSlot): void {
+    const dx = instance.position.x - slot.x;
+    const dz = instance.position.z - slot.z;
+    if (Math.abs(dx) < 0.01 && Math.abs(dz) < 0.01) return;
+    gsap.to(instance.position, { x: slot.x, z: slot.z, duration: 0.5, ease: 'power2.inOut' });
   }
 
   private async spawnVehicle(sesion: Sesion, slot: PlazaSlot): Promise<void> {

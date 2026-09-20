@@ -137,6 +137,9 @@ interface ZonaResumen {
                        [ngModelOptions]="{standalone: true}"
                        class="glass-input w-20 !py-1.5" />
                 <button (click)="guardarAjusteZona(z)" [disabled]="guardandoZona()" class="btn-ghost !px-3 !py-1.5 text-xs">Guardar</button>
+                <button (click)="eliminarZona(z)" [disabled]="guardandoZona()" class="btn-icon !h-8 !w-8 hover:!border-red-400/25 hover:!bg-red-500/10 hover:!text-red-300 disabled:opacity-30">
+                  <svg lucideTrash [size]="13"></svg>
+                </button>
               </div>
             </div>
           }
@@ -428,6 +431,23 @@ export class SpacesComponent implements OnInit {
       },
       error: (err) => {
         this.toast.error(err.error?.message ?? 'No se pudo ajustar la zona');
+        this.guardandoZona.set(false);
+      }
+    });
+  }
+
+  eliminarZona(z: ZonaResumen): void {
+    if (!confirm(`Eliminar la zona "${z.zona}" (${z.tipo})? Se eliminaran sus ${z.total} plazas.`)) return;
+    this.guardandoZona.set(true);
+    this.plazaService.ajustarZona({ zona: z.zona, tipo: z.tipo, cantidadTotal: 0 }).subscribe({
+      next: () => {
+        this.toast.exito(`Zona "${z.zona}" eliminada`);
+        delete this.ajustes[this.claveZona(z)];
+        this.guardandoZona.set(false);
+        this.cargarPlazas();
+      },
+      error: (err) => {
+        this.toast.error(err.error?.message ?? 'No se pudo eliminar la zona');
         this.guardandoZona.set(false);
       }
     });

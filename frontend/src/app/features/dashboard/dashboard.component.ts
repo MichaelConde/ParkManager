@@ -81,14 +81,30 @@ import { ToastService } from '../../shared/services/toast.service';
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div gsapReveal [gsapIndex]="5" class="lg:col-span-2">
           <app-glass-card padding="lg" [glow]="true">
-            <div class="mb-4 flex items-center justify-between">
+            <div class="mb-3 flex items-center justify-between">
               <p class="label-eyebrow">Mapa de plazas</p>
               <p class="text-[11px] text-slate-600">Arrastra para rotar &middot; click en una plaza para su ingreso/salida</p>
             </div>
+            @if (zonasDisponibles().length > 0) {
+              <div class="mb-4 flex gap-2 overflow-x-auto pb-1">
+                <button (click)="zonaSeleccionada.set(null)"
+                        class="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200"
+                        [ngClass]="zonaSeleccionada() === null ? 'bg-accent-500 text-ink-950 shadow-glow-sm' : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:text-white'">
+                  Todos
+                </button>
+                @for (z of zonasDisponibles(); track z) {
+                  <button (click)="zonaSeleccionada.set(z)"
+                          class="shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200"
+                          [ngClass]="zonaSeleccionada() === z ? 'bg-accent-500 text-ink-950 shadow-glow-sm' : 'border border-white/10 bg-white/[0.03] text-slate-400 hover:text-white'">
+                    {{ z }}
+                  </button>
+                }
+              </div>
+            }
             <div class="h-[420px] overflow-hidden rounded-xl bg-black/20">
               <app-parking-scene
-                [plazas]="plazas()"
-                [sesiones]="sesionesActivas()"
+                [plazas]="plazasFiltradas()"
+                [sesiones]="sesionesEnMapa()"
                 (vehicleClick)="onVehicleClick($event)"
                 (freeSlotClick)="onFreeSlotClick($event)"
               />
@@ -262,6 +278,24 @@ export class DashboardComponent implements OnInit {
   porcentajeOcupacion = computed(() => {
     const total = this.plazas().length;
     return total === 0 ? 0 : Math.round((this.ocupadas() * 1000) / total) / 10;
+  });
+
+  zonaSeleccionada = signal<string | null>(null);
+  zonasDisponibles = computed(() => {
+    const set = new Set<string>();
+    for (const p of this.plazas()) {
+      const zona = p.zona?.trim();
+      if (zona) set.add(zona);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b));
+  });
+  plazasFiltradas = computed(() => {
+    const zona = this.zonaSeleccionada();
+    return zona ? this.plazas().filter((p) => p.zona === zona) : this.plazas();
+  });
+  sesionesEnMapa = computed(() => {
+    const codigos = new Set(this.plazasFiltradas().map((p) => p.codigo));
+    return this.sesionesActivas().filter((s) => codigos.has(s.plazaCodigo));
   });
 
   constructor(private plazaService: PlazaService, private sesionService: SesionService, private toast: ToastService) {}
