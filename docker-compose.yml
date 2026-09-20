@@ -44,6 +44,9 @@ services:
     container_name: parking-frontend
     depends_on:
       - backend
+    environment:
+      BACKEND_SCHEME: http
+      BACKEND_HOST: backend:8080
     ports:
       - "8090:80"
 

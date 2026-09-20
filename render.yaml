@@ -1,0 +1,35 @@
+services:
+  - name: parkmanager-backend
+    type: web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: APP_CORS_ORIGINS
+        value: https://parkmanager.onrender.com,http://localhost:4200,http://localhost:8090
+
+  - name: parkmanager
+    type: web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /
+    envVars:
+      - key: BACKEND_SCHEME
+        value: https
+      - key: BACKEND_HOST
+        fromService:
+          name: parkmanager-backend
+          type: web
+          property: host

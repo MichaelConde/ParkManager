@@ -8,7 +8,8 @@ server {
     gzip_types text/plain text/css application/javascript application/json image/svg+xml;
 
     location /api/ {
-        proxy_pass http://backend:8080/api/;
+        proxy_pass ${BACKEND_SCHEME}://${BACKEND_HOST}/api/;
+        proxy_ssl_server_name on;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -16,7 +17,8 @@ server {
     }
 
     location /actuator/health {
-        proxy_pass http://backend:8080/actuator/health;
+        proxy_pass ${BACKEND_SCHEME}://${BACKEND_HOST}/actuator/health;
+        proxy_ssl_server_name on;
     }
 
     location / {
