@@ -55,7 +55,7 @@ class SesionServiceTest {
 
     @Test
     void registrarIngreso_asignaPlazaLibreYCongelaLaTarifaVigente() {
-        IngresoRequest request = new IngresoRequest("abc-123", TipoVehiculo.AUTO, "Toyota Yaris", null);
+        IngresoRequest request = new IngresoRequest("abc-123", TipoVehiculo.AUTO, "Toyota Yaris", null, null);
 
         when(sesionRepository.findFirstByVehiculo_PlacaIgnoreCaseAndEstado("ABC-123", EstadoSesion.ACTIVA))
                 .thenReturn(Optional.empty());
@@ -84,8 +84,60 @@ class SesionServiceTest {
     }
 
     @Test
+    void registrarIngreso_usaLaPlazaEspecificaCuandoSeIndicaPlazaId() {
+        IngresoRequest request = new IngresoRequest("ABC-123", TipoVehiculo.AUTO, null, null, 10L);
+
+        when(sesionRepository.findFirstByVehiculo_PlacaIgnoreCaseAndEstado("ABC-123", EstadoSesion.ACTIVA))
+                .thenReturn(Optional.empty());
+        when(plazaRepository.findById(10L)).thenReturn(Optional.of(plazaLibre));
+        when(vehiculoService.obtenerOCrear("ABC-123", TipoVehiculo.AUTO, null, null)).thenReturn(vehiculo);
+        when(usuarioRepository.findByUsername("cajero1")).thenReturn(Optional.of(cajero));
+        when(tarifaService.precioHoraVigente(TipoVehiculo.AUTO)).thenReturn(new BigDecimal("4.00"));
+        when(qrCodeService.generarCodigoUnico()).thenReturn("QR123456789");
+        when(qrCodeService.generarImagenBase64(anyString())).thenReturn("data:image/png;base64,AAAA");
+        when(sesionRepository.save(any(SesionEstacionamiento.class))).thenAnswer(inv -> {
+            SesionEstacionamiento s = inv.getArgument(0);
+            s.setId(500L);
+            return s;
+        });
+
+        SesionResponse response = sesionService.registrarIngreso(request, "cajero1");
+
+        assertThat(response.plazaCodigo()).isEqualTo("A-01");
+        verify(plazaRepository, never()).findFirstByTipoAndEstadoOrderByIdAsc(any(), any());
+        verify(plazaRepository).save(plazaLibre);
+    }
+
+    @Test
+    void registrarIngreso_fallaSiLaPlazaEspecificaYaNoEstaLibre() {
+        plazaLibre.setEstado(EstadoPlaza.OCUPADA);
+        IngresoRequest request = new IngresoRequest("ABC-123", TipoVehiculo.AUTO, null, null, 10L);
+
+        when(sesionRepository.findFirstByVehiculo_PlacaIgnoreCaseAndEstado("ABC-123", EstadoSesion.ACTIVA))
+                .thenReturn(Optional.empty());
+        when(plazaRepository.findById(10L)).thenReturn(Optional.of(plazaLibre));
+
+        assertThatThrownBy(() -> sesionService.registrarIngreso(request, "cajero1"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("ya no esta libre");
+    }
+
+    @Test
+    void registrarIngreso_fallaSiLaPlazaEspecificaEsDeOtroTipo() {
+        IngresoRequest request = new IngresoRequest("MOT-123", TipoVehiculo.MOTO, null, null, 10L);
+
+        when(sesionRepository.findFirstByVehiculo_PlacaIgnoreCaseAndEstado("MOT-123", EstadoSesion.ACTIVA))
+                .thenReturn(Optional.empty());
+        when(plazaRepository.findById(10L)).thenReturn(Optional.of(plazaLibre));
+
+        assertThatThrownBy(() -> sesionService.registrarIngreso(request, "cajero1"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("es para AUTO");
+    }
+
+    @Test
     void registrarIngreso_fallaSiNoHayPlazasDisponibles() {
-        IngresoRequest request = new IngresoRequest("ABC-123", TipoVehiculo.AUTO, null, null);
+        IngresoRequest request = new IngresoRequest("ABC-123", TipoVehiculo.AUTO, null, null, null);
 
         when(sesionRepository.findFirstByVehiculo_PlacaIgnoreCaseAndEstado("ABC-123", EstadoSesion.ACTIVA))
                 .thenReturn(Optional.empty());
@@ -99,7 +151,7 @@ class SesionServiceTest {
 
     @Test
     void registrarIngreso_fallaSiElVehiculoYaTieneSesionActiva() {
-        IngresoRequest request = new IngresoRequest("ABC-123", TipoVehiculo.AUTO, null, null);
+        IngresoRequest request = new IngresoRequest("ABC-123", TipoVehiculo.AUTO, null, null, null);
         SesionEstacionamiento activa = SesionEstacionamiento.builder().id(1L).build();
 
         when(sesionRepository.findFirstByVehiculo_PlacaIgnoreCaseAndEstado("ABC-123", EstadoSesion.ACTIVA))

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { LucidePencil, LucidePlus, LucideTrash } from '@lucide/angular';
+import { LucideLayers, LucidePencil, LucidePlus, LucideTrash } from '@lucide/angular';
 import { PlazaService } from '../../core/services/plaza.service';
 import { TarifaService } from '../../core/services/tarifa.service';
 import { EstadoPlaza, Plaza, Tarifa, TipoVehiculo } from '../../core/models/models';
@@ -10,6 +10,14 @@ import { GlassCardComponent } from '../../shared/ui/glass-card.component';
 import { StatusBadgeComponent } from '../../shared/ui/status-badge.component';
 import { GsapRevealDirective } from '../../shared/animations/gsap-reveal.directive';
 import { plazaTone } from '../../shared/ui/status.util';
+
+interface ZonaResumen {
+  zona: string;
+  tipo: TipoVehiculo;
+  total: number;
+  libres: number;
+  ocupadas: number;
+}
 
 @Component({
   selector: 'app-spaces',
@@ -23,7 +31,8 @@ import { plazaTone } from '../../shared/ui/status.util';
     GsapRevealDirective,
     LucidePlus,
     LucidePencil,
-    LucideTrash
+    LucideTrash,
+    LucideLayers
   ],
   template: `
     <div class="space-y-6">
@@ -70,6 +79,71 @@ import { plazaTone } from '../../shared/ui/status.util';
             <svg lucidePlus [size]="15"></svg> Actualizar tarifa
           </button>
         }
+      </app-glass-card>
+
+      <!-- Zonas / pisos -->
+      <app-glass-card padding="lg">
+        <div class="mb-4 flex items-center justify-between">
+          <p class="label-eyebrow flex items-center gap-1.5">
+            <svg lucideLayers [size]="14"></svg> Zonas y pisos
+          </p>
+          <button (click)="nuevaZona()" class="btn-primary !px-4 !py-2 text-xs">
+            <svg lucidePlus [size]="14"></svg> Nueva zona / piso
+          </button>
+        </div>
+        <p class="mb-4 -mt-2 text-xs text-slate-500">
+          Una zona agrupa varias plazas individuales (por ejemplo un piso o un sector). Crea una zona nueva con
+          la cantidad de plazas que necesites, o ajusta cuantas tiene una zona existente.
+        </p>
+
+        @if (formZonaVisible()) {
+          <form [formGroup]="formZona" (ngSubmit)="guardarZona()" class="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+            <div>
+              <label class="label-eyebrow mb-1.5 block">Nombre de zona / piso</label>
+              <input formControlName="zona" type="text" class="glass-input w-40" placeholder="Piso 2" />
+            </div>
+            <div>
+              <label class="label-eyebrow mb-1.5 block">Tipo</label>
+              <select formControlName="tipo" class="glass-input w-28">
+                <option value="AUTO">AUTO</option>
+                <option value="MOTO">MOTO</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-eyebrow mb-1.5 block">Prefijo de codigo</label>
+              <input formControlName="prefijo" type="text" class="glass-input w-24 uppercase" placeholder="C" maxlength="6" />
+            </div>
+            <div>
+              <label class="label-eyebrow mb-1.5 block">Cantidad de plazas</label>
+              <input formControlName="cantidad" type="number" min="1" max="200" class="glass-input w-28" />
+            </div>
+            <button type="submit" [disabled]="formZona.invalid || guardandoZona()" class="btn-primary">Crear</button>
+            <button type="button" (click)="formZonaVisible.set(false)" class="btn-ghost">Cancelar</button>
+          </form>
+        }
+
+        <div class="space-y-2">
+          @for (z of zonas(); track z.zona + '|' + z.tipo) {
+            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3">
+              <div>
+                <p class="font-semibold text-white">{{ z.zona }} <span class="text-xs font-normal text-slate-500">({{ z.tipo }})</span></p>
+                <p class="text-xs text-slate-500">{{ z.libres }} libres &middot; {{ z.ocupadas }} ocupadas &middot; {{ z.total }} en total</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="label-eyebrow">Total de plazas</label>
+                <input type="number" min="0" max="200"
+                       [ngModel]="ajustes[claveZona(z)] ?? z.total"
+                       (ngModelChange)="ajustes[claveZona(z)] = $event"
+                       [ngModelOptions]="{standalone: true}"
+                       class="glass-input w-20 !py-1.5" />
+                <button (click)="guardarAjusteZona(z)" [disabled]="guardandoZona()" class="btn-ghost !px-3 !py-1.5 text-xs">Guardar</button>
+              </div>
+            </div>
+          }
+          @if (zonas().length === 0) {
+            <p class="py-6 text-center text-sm text-slate-500">Aun no hay zonas creadas.</p>
+          }
+        </div>
       </app-glass-card>
 
       <!-- Plazas -->
@@ -174,6 +248,10 @@ export class SpacesComponent implements OnInit {
   guardandoPlaza = signal(false);
   guardandoTarifa = signal(false);
 
+  formZonaVisible = signal(false);
+  guardandoZona = signal(false);
+  ajustes: Record<string, number> = {};
+
   tone = plazaTone;
 
   private fb = inject(FormBuilder);
@@ -188,6 +266,13 @@ export class SpacesComponent implements OnInit {
   formTarifa = this.fb.group({
     tipoVehiculo: ['AUTO' as TipoVehiculo, Validators.required],
     precioHora: [0, [Validators.required, Validators.min(0.1)]]
+  });
+
+  formZona = this.fb.group({
+    zona: ['', Validators.required],
+    tipo: ['AUTO' as TipoVehiculo, Validators.required],
+    prefijo: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9]+$/)]],
+    cantidad: [1, [Validators.required, Validators.min(1), Validators.max(200)]]
   });
 
   constructor(
@@ -281,6 +366,69 @@ export class SpacesComponent implements OnInit {
       error: (err) => {
         this.toast.error(err.error?.message ?? 'No se pudo actualizar la tarifa');
         this.guardandoTarifa.set(false);
+      }
+    });
+  }
+
+  zonas(): ZonaResumen[] {
+    const grupos = new Map<string, ZonaResumen>();
+    for (const p of this.plazas()) {
+      const zona = p.zona?.trim();
+      if (!zona) continue;
+      const key = `${zona}|${p.tipo}`;
+      const grupo = grupos.get(key) ?? { zona, tipo: p.tipo, total: 0, libres: 0, ocupadas: 0 };
+      grupo.total++;
+      if (p.estado === 'LIBRE') grupo.libres++;
+      else grupo.ocupadas++;
+      grupos.set(key, grupo);
+    }
+    return [...grupos.values()].sort((a, b) => a.zona.localeCompare(b.zona) || a.tipo.localeCompare(b.tipo));
+  }
+
+  claveZona(z: { zona: string; tipo: TipoVehiculo }): string {
+    return `${z.zona}|${z.tipo}`;
+  }
+
+  nuevaZona(): void {
+    this.formZona.reset({ zona: '', tipo: 'AUTO', prefijo: '', cantidad: 1 });
+    this.formZonaVisible.set(true);
+  }
+
+  guardarZona(): void {
+    if (this.formZona.invalid || this.guardandoZona()) return;
+    this.guardandoZona.set(true);
+    const v = this.formZona.getRawValue();
+    this.plazaService
+      .crearZona({ zona: v.zona!, tipo: v.tipo!, prefijo: v.prefijo!.toUpperCase(), cantidad: v.cantidad! })
+      .subscribe({
+        next: (creadas) => {
+          this.toast.exito(`${creadas.length} plazas creadas en "${v.zona}"`);
+          this.formZonaVisible.set(false);
+          this.guardandoZona.set(false);
+          this.cargarPlazas();
+        },
+        error: (err) => {
+          this.toast.error(err.error?.message ?? 'No se pudo crear la zona');
+          this.guardandoZona.set(false);
+        }
+      });
+  }
+
+  guardarAjusteZona(z: ZonaResumen): void {
+    const key = this.claveZona(z);
+    const nuevoTotal = this.ajustes[key] ?? z.total;
+    if (nuevoTotal === z.total) return;
+    this.guardandoZona.set(true);
+    this.plazaService.ajustarZona({ zona: z.zona, tipo: z.tipo, cantidadTotal: nuevoTotal }).subscribe({
+      next: () => {
+        this.toast.exito(`Zona "${z.zona}" ajustada a ${nuevoTotal} plazas`);
+        delete this.ajustes[key];
+        this.guardandoZona.set(false);
+        this.cargarPlazas();
+      },
+      error: (err) => {
+        this.toast.error(err.error?.message ?? 'No se pudo ajustar la zona');
+        this.guardandoZona.set(false);
       }
     });
   }

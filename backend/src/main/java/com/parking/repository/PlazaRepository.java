@@ -19,4 +19,8 @@ public interface PlazaRepository extends JpaRepository<PlazaEstacionamiento, Lon
     long countByTipoAndEstado(TipoVehiculo tipo, EstadoPlaza estado);
 
     boolean existsByCodigoIgnoreCase(String codigo);
+
+    List<PlazaEstacionamiento> findByZonaIgnoreCaseAndTipo(String zona, TipoVehiculo tipo);
+
+    List<PlazaEstacionamiento> findByCodigoStartingWithIgnoreCase(String prefijo);
 }

@@ -5,6 +5,8 @@ import com.parking.domain.TipoVehiculo;
 import com.parking.dto.PlazaRequest;
 import com.parking.dto.PlazaResponse;
 import com.parking.dto.PlazaUpdateRequest;
+import com.parking.dto.ZonaAjusteRequest;
+import com.parking.dto.ZonaRequest;
 import com.parking.service.PlazaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,5 +47,17 @@ public class PlazaController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         plazaService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/zonas")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<PlazaResponse>> crearZona(@Valid @RequestBody ZonaRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(plazaService.crearZona(request));
+    }
+
+    @PutMapping("/zonas/ajustar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<PlazaResponse> ajustarZona(@Valid @RequestBody ZonaAjusteRequest request) {
+        return plazaService.ajustarZona(request);
     }
 }

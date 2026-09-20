@@ -35,6 +35,7 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
   @Input() plazas: Plaza[] = [];
   @Input() sesiones: Sesion[] = [];
   @Output() vehicleClick = new EventEmitter<string>();
+  @Output() freeSlotClick = new EventEmitter<string>();
 
   @ViewChild('host', { static: true }) hostRef!: ElementRef<HTMLDivElement>;
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -187,20 +188,25 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
     if (!start) return;
     const dist = Math.hypot(event.clientX - start.x, event.clientY - start.y);
     if (dist > this.CLICK_DRAG_THRESHOLD) return;
-    this.handleVehicleClick(event);
+
+    const target = this.pickTarget(event);
+    if (!target) return;
+    if (target.type === 'vehicle') this.vehicleClick.emit(target.codigoQr);
+    else this.freeSlotClick.emit(target.plazaCodigo);
   };
 
   private onPointerMove = (event: PointerEvent): void => {
     const canvas = this.canvasRef.nativeElement;
-    canvas.style.cursor = this.pickVehicleCodigoQr(event) ? 'pointer' : '';
+    canvas.style.cursor = this.pickTarget(event) ? 'pointer' : '';
   };
 
-  private handleVehicleClick(event: PointerEvent): void {
-    const codigoQr = this.pickVehicleCodigoQr(event);
-    if (codigoQr) this.vehicleClick.emit(codigoQr);
-  }
-
-  private pickVehicleCodigoQr(event: PointerEvent): string | null {
+  /**
+   * Primero intenta contra los vehiculos (prioridad, ya que estan encima
+   * de su plaza); si no hay hit, intenta contra el plano de relleno de
+   * cada plaza (no las lineas de borde, cuyo raycasting con threshold es
+   * poco preciso) y solo la reporta como objetivo si esta LIBRE.
+   */
+  private pickTarget(event: PointerEvent): { type: 'vehicle'; codigoQr: string } | { type: 'free'; plazaCodigo: string } | null {
     const canvas = this.canvasRef.nativeElement;
     const rect = canvas.getBoundingClientRect();
     const ndc = new THREE.Vector2(
@@ -208,14 +214,26 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
       -((event.clientY - rect.top) / rect.height) * 2 + 1
     );
     this.raycaster.setFromCamera(ndc, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.vehiclesGroup.children, true);
-    if (intersects.length === 0) return null;
 
-    let obj: THREE.Object3D | null = intersects[0].object;
-    while (obj && obj.parent !== this.vehiclesGroup) {
-      obj = obj.parent;
+    const vehicleHits = this.raycaster.intersectObjects(this.vehiclesGroup.children, true);
+    if (vehicleHits.length > 0) {
+      let obj: THREE.Object3D | null = vehicleHits[0].object;
+      while (obj && obj.parent !== this.vehiclesGroup) {
+        obj = obj.parent;
+      }
+      const codigoQr = obj?.userData?.['codigoQr'] as string | undefined;
+      if (codigoQr) return { type: 'vehicle', codigoQr };
     }
-    return (obj?.userData?.['codigoQr'] as string) ?? null;
+
+    const padFills = this.padsGroup.children.filter((o) => (o as THREE.Mesh).isMesh);
+    const padHits = this.raycaster.intersectObjects(padFills, false);
+    if (padHits.length > 0) {
+      const plazaCodigo = padHits[0].object.userData?.['plazaCodigo'] as string | undefined;
+      if (plazaCodigo && this.slots.get(plazaCodigo)?.estado === 'LIBRE') {
+        return { type: 'free', plazaCodigo };
+      }
+    }
+    return null;
   }
 
   private onResize(): void {
@@ -279,6 +297,7 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
       );
       fill.rotation.x = -Math.PI / 2;
       fill.position.set(slot.x, 0.01, slot.z);
+      fill.userData['plazaCodigo'] = slot.codigo;
       this.padsGroup.add(fill);
 
       const edges = new THREE.LineSegments(

@@ -81,6 +81,19 @@ export interface PlazaUpdateRequest {
   estado: EstadoPlaza;
 }
 
+export interface ZonaRequest {
+  zona: string;
+  tipo: TipoVehiculo;
+  prefijo: string;
+  cantidad: number;
+}
+
+export interface ZonaAjusteRequest {
+  zona: string;
+  tipo: TipoVehiculo;
+  cantidadTotal: number;
+}
+
 export interface Tarifa {
   id: number;
   tipoVehiculo: TipoVehiculo;
@@ -99,6 +112,7 @@ export interface IngresoRequest {
   tipo: TipoVehiculo;
   modelo?: string;
   clienteId?: number;
+  plazaId?: number;
 }
 
 export interface Sesion {

@@ -1,7 +1,15 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { EstadoPlaza, Plaza, PlazaRequest, PlazaUpdateRequest, TipoVehiculo } from '../models/models';
+import {
+  EstadoPlaza,
+  Plaza,
+  PlazaRequest,
+  PlazaUpdateRequest,
+  TipoVehiculo,
+  ZonaAjusteRequest,
+  ZonaRequest
+} from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class PlazaService {
@@ -26,5 +34,13 @@ export class PlazaService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  crearZona(request: ZonaRequest): Observable<Plaza[]> {
+    return this.http.post<Plaza[]>(`${this.base}/zonas`, request);
+  }
+
+  ajustarZona(request: ZonaAjusteRequest): Observable<Plaza[]> {
+    return this.http.put<Plaza[]>(`${this.base}/zonas/ajustar`, request);
   }
 }

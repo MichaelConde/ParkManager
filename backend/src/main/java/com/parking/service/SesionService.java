@@ -45,9 +45,10 @@ public class SesionService {
                     throw new BusinessException("El vehiculo " + placa + " ya tiene una sesion activa");
                 });
 
-        PlazaEstacionamiento plaza = plazaRepository
-                .findFirstByTipoAndEstadoOrderByIdAsc(request.tipo(), EstadoPlaza.LIBRE)
-                .orElseThrow(() -> new BusinessException("Estacionamiento lleno: no hay plazas disponibles para " + request.tipo()));
+        PlazaEstacionamiento plaza = request.plazaId() != null
+                ? obtenerPlazaEspecifica(request.plazaId(), request.tipo())
+                : plazaRepository.findFirstByTipoAndEstadoOrderByIdAsc(request.tipo(), EstadoPlaza.LIBRE)
+                        .orElseThrow(() -> new BusinessException("Estacionamiento lleno: no hay plazas disponibles para " + request.tipo()));
 
         Vehiculo vehiculo = vehiculoService.obtenerOCrear(placa, request.tipo(), request.modelo(), request.clienteId());
         Usuario cajero = usuarioActual(usernameCajero);
@@ -158,6 +159,18 @@ public class SesionService {
     }
 
     // --- helpers internos ---
+
+    private PlazaEstacionamiento obtenerPlazaEspecifica(Long plazaId, TipoVehiculo tipo) {
+        PlazaEstacionamiento plaza = plazaRepository.findById(plazaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Plaza no encontrada: " + plazaId));
+        if (plaza.getEstado() != EstadoPlaza.LIBRE) {
+            throw new BusinessException("La plaza " + plaza.getCodigo() + " ya no esta libre");
+        }
+        if (plaza.getTipo() != tipo) {
+            throw new BusinessException("La plaza " + plaza.getCodigo() + " es para " + plaza.getTipo() + ", no para " + tipo);
+        }
+        return plaza;
+    }
 
     private SesionEstacionamiento resolverSesionActiva(SalidaRequest request) {
         if (request.sesionId() != null) {
