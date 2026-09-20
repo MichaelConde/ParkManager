@@ -2,9 +2,11 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
   OnChanges,
   OnDestroy,
+  Output,
   SimpleChanges,
   ViewChild
 } from '@angular/core';
@@ -32,6 +34,7 @@ const STATUS_COLOR = {
 export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() plazas: Plaza[] = [];
   @Input() sesiones: Sesion[] = [];
+  @Output() vehicleClick = new EventEmitter<string>();
 
   @ViewChild('host', { static: true }) hostRef!: ElementRef<HTMLDivElement>;
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -50,6 +53,10 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
   private instances = new Map<string, THREE.Group>();
   private pendingSpawns = new Set<string>();
   private viewSize = 7;
+
+  private raycaster = new THREE.Raycaster();
+  private pointerDownAt: { x: number; y: number } | null = null;
+  private readonly CLICK_DRAG_THRESHOLD = 6;
 
   constructor(private vehicleModelService: VehicleModelService) {}
 
@@ -75,6 +82,10 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
     clearTimeout(this.resumeAutoRotateTimeout);
     this.resizeObserver?.disconnect();
     this.controls?.dispose();
+    const canvas = this.canvasRef?.nativeElement;
+    canvas?.removeEventListener('pointerdown', this.onPointerDown);
+    canvas?.removeEventListener('pointerup', this.onPointerUp);
+    canvas?.removeEventListener('pointermove', this.onPointerMove);
     this.instances.forEach((inst) => this.vehicleModelService.disposeInstance(inst));
     this.instances.clear();
     this.renderer?.dispose();
@@ -154,6 +165,57 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
 
     this.resizeObserver = new ResizeObserver(() => this.onResize());
     this.resizeObserver.observe(host);
+
+    canvas.addEventListener('pointerdown', this.onPointerDown);
+    canvas.addEventListener('pointerup', this.onPointerUp);
+    canvas.addEventListener('pointermove', this.onPointerMove);
+  }
+
+  /**
+   * OrbitControls tambien escucha pointerdown/up en el mismo canvas para
+   * rotar la camara; distinguimos un click real de un drag de rotacion
+   * midiendo cuanto se movio el puntero entre down y up, en vez de asumir
+   * que todo pointerup sin drag previo es un click sobre un vehiculo.
+   */
+  private onPointerDown = (event: PointerEvent): void => {
+    this.pointerDownAt = { x: event.clientX, y: event.clientY };
+  };
+
+  private onPointerUp = (event: PointerEvent): void => {
+    const start = this.pointerDownAt;
+    this.pointerDownAt = null;
+    if (!start) return;
+    const dist = Math.hypot(event.clientX - start.x, event.clientY - start.y);
+    if (dist > this.CLICK_DRAG_THRESHOLD) return;
+    this.handleVehicleClick(event);
+  };
+
+  private onPointerMove = (event: PointerEvent): void => {
+    const canvas = this.canvasRef.nativeElement;
+    canvas.style.cursor = this.pickVehicleCodigoQr(event) ? 'pointer' : '';
+  };
+
+  private handleVehicleClick(event: PointerEvent): void {
+    const codigoQr = this.pickVehicleCodigoQr(event);
+    if (codigoQr) this.vehicleClick.emit(codigoQr);
+  }
+
+  private pickVehicleCodigoQr(event: PointerEvent): string | null {
+    const canvas = this.canvasRef.nativeElement;
+    const rect = canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    this.raycaster.setFromCamera(ndc, this.camera);
+    const intersects = this.raycaster.intersectObjects(this.vehiclesGroup.children, true);
+    if (intersects.length === 0) return null;
+
+    let obj: THREE.Object3D | null = intersects[0].object;
+    while (obj && obj.parent !== this.vehiclesGroup) {
+      obj = obj.parent;
+    }
+    return (obj?.userData?.['codigoQr'] as string) ?? null;
   }
 
   private onResize(): void {
@@ -258,6 +320,7 @@ export class ParkingSceneComponent implements AfterViewInit, OnChanges, OnDestro
     this.pendingSpawns.add(sesion.codigoQr);
     try {
       const instance = await this.vehicleModelService.createInstance(sesion.tipoVehiculo, sesion.codigoQr);
+      instance.userData['codigoQr'] = sesion.codigoQr;
       const finalY = instance.position.y;
       instance.position.set(slot.x, finalY + 2.2, slot.z);
       instance.scale.multiplyScalar(0.001);
