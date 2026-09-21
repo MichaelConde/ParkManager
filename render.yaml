@@ -29,7 +29,4 @@ services:
       - key: BACKEND_SCHEME
         value: https
       - key: BACKEND_HOST
-        fromService:
-          name: parkmanager-backend
-          type: web
-          property: host
+        value: parkmanager-backend.onrender.com
