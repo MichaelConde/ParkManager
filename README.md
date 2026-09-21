@@ -140,11 +140,6 @@ esta version, ya que requieren infraestructura o servicios externos:
   como datos, sin procesar transacciones).
 - Observabilidad avanzada: stack ELK para logs centralizados,
   Prometheus + Grafana para metricas y alertas.
-- Despliegue en cluster (Kubernetes) con auto-escalado y balanceo de
-  carga entre multiples replicas del backend.
-- CI/CD (GitHub Actions/GitLab CI) con analisis estatico (SonarQube) y
-  escaneo de dependencias (OWASP Dependency-Check).
-- App movil nativa / PWA instalable.
 
 ## Estructura del repositorio
 
