@@ -16,7 +16,7 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: APP_CORS_ORIGINS
-        value: https://parkmanager.onrender.com,http://localhost:4200,http://localhost:8090
+        value: https://parkmanager-xbkx.onrender.com,http://localhost:4200,http://localhost:8090
 
   - name: parkmanager
     type: web
