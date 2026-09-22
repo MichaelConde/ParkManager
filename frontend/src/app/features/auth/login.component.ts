@@ -48,8 +48,14 @@ import { AuthService } from '../../core/services/auth.service';
             </p>
           }
 
+          @if (esperandoReactivacion()) {
+            <p class="text-xs text-slate-500">
+              El servidor puede estar reactivandose tras estar inactivo. Esto puede tardar hasta un minuto, no cierres esta pagina.
+            </p>
+          }
+
           <button type="submit" [disabled]="form.invalid || cargando()" class="btn-primary w-full !py-2.5">
-            {{ cargando() ? 'Ingresando...' : 'Ingresar' }}
+            {{ cargando() ? (esperandoReactivacion() ? 'Reactivando el servidor...' : 'Ingresando...') : 'Ingresar' }}
           </button>
         </form>
 
@@ -65,6 +71,9 @@ export class LoginComponent implements AfterViewInit {
 
   cargando = signal(false);
   error = signal<string | null>(null);
+  esperandoReactivacion = signal(false);
+
+  private reactivacionTimeout?: ReturnType<typeof setTimeout>;
 
   form = this.fb.group({
     username: ['', Validators.required],
@@ -85,10 +94,15 @@ export class LoginComponent implements AfterViewInit {
     if (this.form.invalid) return;
     this.cargando.set(true);
     this.error.set(null);
+    this.esperandoReactivacion.set(false);
+    clearTimeout(this.reactivacionTimeout);
+    this.reactivacionTimeout = setTimeout(() => this.esperandoReactivacion.set(true), 4000);
 
     this.auth.login(this.form.getRawValue() as { username: string; password: string }).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (err) => {
+        clearTimeout(this.reactivacionTimeout);
+        this.esperandoReactivacion.set(false);
         this.error.set(
           err.status === 401
             ? 'Usuario o contrasena incorrectos'
