@@ -88,8 +88,12 @@ export class LoginComponent implements AfterViewInit {
 
     this.auth.login(this.form.getRawValue() as { username: string; password: string }).subscribe({
       next: () => this.router.navigate(['/dashboard']),
-      error: () => {
-        this.error.set('Usuario o contrasena incorrectos');
+      error: (err) => {
+        this.error.set(
+          err.status === 401
+            ? 'Usuario o contrasena incorrectos'
+            : 'No se pudo conectar con el servidor. Si no lo usabas hace rato, puede estar reactivandose: espera unos segundos y reintenta.'
+        );
         this.cargando.set(false);
       }
     });
